@@ -21,7 +21,7 @@ router.post("/register", authLimiter, async (req, res, next) => {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
     if (name.length < 2 || name.length > 80) return res.status(400).json({ message: "Name must be 2–80 characters" });
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return res.status(400).json({ message: "Enter a valid email address" });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: "Enter a valid email address" });
     if (password.length < 8 || password.length > 72) return res.status(400).json({ message: "Password must be 8–72 characters" });
     if (await User.exists({ email })) return res.status(409).json({ message: "An account with this email already exists" });
     const passwordHash = await bcrypt.hash(password, 12);
