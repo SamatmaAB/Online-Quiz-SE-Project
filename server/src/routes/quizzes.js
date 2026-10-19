@@ -47,4 +47,13 @@ router.get("/", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.get("/:quizId", async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.quizId)) return res.status(400).json({ message: "Invalid quiz identifier" });
+    const quiz = await Quiz.findOne({ _id: req.params.quizId, isPublished: true });
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    res.json({ quiz: quizSummary(quiz), questions: quiz.questions.map(publicQuestion) });
+  } catch (error) { next(error); }
+});
+
 export default router;
