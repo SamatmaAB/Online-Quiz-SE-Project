@@ -47,6 +47,17 @@ router.get("/", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+function parseQuizInput(input) {
+  const { title, description = "", category, difficulty, durationMinutes, questions = [], isPublished = true } = input || {};
+  if (typeof title !== "string" || title.trim().length < 2 || title.trim().length > 160 ||
+      typeof category !== "string" || !category.trim() || category.trim().length > 80 ||
+      !difficulties.has(difficulty) || !Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 600 ||
+      !Array.isArray(questions) || questions.some((question) => !parseQuestion(question)) || typeof isPublished !== "boolean") return null;
+  return {
+    title: title.trim(), description, category: category.trim(), difficulty, durationMinutes,
+    questions: questions.map(parseQuestion), isPublished
+  };
+}
 router.get("/:quizId", async (req, res, next) => {
   try {
     if (!mongoose.isValidObjectId(req.params.quizId)) return res.status(400).json({ message: "Invalid quiz identifier" });
