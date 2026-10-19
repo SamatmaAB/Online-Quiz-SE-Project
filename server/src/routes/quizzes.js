@@ -58,6 +58,14 @@ function parseQuizInput(input) {
     questions: questions.map(parseQuestion), isPublished
   };
 }
+router.post("/", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const quizInput = parseQuizInput(req.body);
+    if (!quizInput) return res.status(400).json({ message: "Provide a valid title, category, difficulty, duration, publication status, and question list" });
+    const quiz = await Quiz.create({ ...quizInput, createdBy: req.user.id });
+    res.status(201).json({ quiz: quizSummary(quiz), questions: quiz.questions.map(adminQuestion) });
+  } catch (error) { next(error); }
+});
 router.get("/:quizId", async (req, res, next) => {
   try {
     if (!mongoose.isValidObjectId(req.params.quizId)) return res.status(400).json({ message: "Invalid quiz identifier" });
