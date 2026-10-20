@@ -75,4 +75,25 @@ router.get("/:quizId", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.patch("/:quizId", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.quizId)) return res.status(400).json({ message: "Invalid quiz identifier" });
+    const allowed = ["title", "description", "category", "difficulty", "durationMinutes", "isPublished"];
+    const entries = Object.entries(req.body || {});
+    if (!entries.length || entries.some(([key]) => !allowed.includes(key))) return res.status(400).json({ message: "Only quiz details may be updated here" });
+    const updates = Object.fromEntries(entries);
+    if (updates.title !== undefined && (typeof updates.title !== "string" || updates.title.trim().length < 2 || updates.title.trim().length > 160)) return res.status(400).json({ message: "Title must be 2–160 characters" });
+    if (updates.category !== undefined && (typeof updates.category !== "string" || !updates.category.trim() || updates.category.trim().length > 80)) return res.status(400).json({ message: "Category must be 1–80 characters" });
+    if (updates.difficulty !== undefined && !difficulties.has(updates.difficulty)) return res.status(400).json({ message: "Difficulty must be easy, medium, or hard" });
+    if (updates.durationMinutes !== undefined && (!Number.isInteger(updates.durationMinutes) || updates.durationMinutes < 1 || updates.durationMinutes > 600)) return res.status(400).json({ message: "Duration must be between 1 and 600 minutes" });
+    if (updates.description !== undefined && (typeof updates.description !== "string" || updates.description.length > 2000)) return res.status(400).json({ message: "Description must be at most 2000 characters" });
+    if (updates.isPublished !== undefined && typeof updates.isPublished !== "boolean") return res.status(400).json({ message: "isPublished must be a boolean" });
+    if (updates.title) updates.title = updates.title.trim();
+    if (updates.category) updates.category = updates.category.trim();
+    const quiz = await Quiz.findByIdAndUpdate(req.params.quizId, updates, { new: true, runValidators: true });
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    res.json({ quiz: quizSummary(quiz) });
+  } catch (error) { next(error); }
+});
+
 export default router;
