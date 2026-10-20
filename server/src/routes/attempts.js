@@ -75,4 +75,23 @@ router.post("/", requireAuth, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.get("/mine", requireAuth, async (req, res, next) => {
+  try {
+    const attempts = await Attempt.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(100);
+    for (const attempt of attempts) await finalizeExpired(attempt);
+    res.json({ attempts: attempts.map((attempt) => attemptView(attempt, { review: attempt.status !== "in-progress" })) });
+  } catch (error) { next(error); }
+});
+
+router.get("/:attemptId", requireAuth, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.attemptId)) return res.status(400).json({ message: "Invalid attempt identifier" });
+    const attempt = await Attempt.findById(req.params.attemptId);
+    if (!attempt) return res.status(404).json({ message: "Attempt not found" });
+    if (String(attempt.user) !== req.user.id && req.user.role !== "admin") return res.status(403).json({ message: "You cannot access this attempt" });
+    await finalizeExpired(attempt);
+    res.json({ attempt: attemptView(attempt, { review: attempt.status !== "in-progress" }) });
+  } catch (error) { next(error); }
+});
+
 export default router;
