@@ -94,4 +94,32 @@ router.get("/:attemptId", requireAuth, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.patch("/:attemptId/answers", requireAuth, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.attemptId)) return res.status(400).json({ message: "Invalid attempt identifier" });
+    const attempt = await Attempt.findById(req.params.attemptId);
+    if (!attempt) return res.status(404).json({ message: "Attempt not found" });
+    if (String(attempt.user) !== req.user.id) return res.status(403).json({ message: "You cannot update this attempt" });
+    await finalizeExpired(attempt);
+    if (attempt.status !== "in-progress") return res.status(409).json({ message: "This attempt is already closed" });
+    const { answers } = req.body || {};
+    if (!Array.isArray(answers)) return res.status(400).json({ message: "answers must be an array of { questionId, selectedOption } values" });
+    const questionsById = new Map(attempt.questions.map((question) => [String(question.questionId), question]));
+    const seen = new Set();
+    for (const answer of answers) {
+      const questionId = String(answer?.questionId || "");
+      const question = questionsById.get(questionId);
+      const selectedOption = answer?.selectedOption;
+      if (!question || seen.has(questionId) ||
+          !(selectedOption === null || (Number.isInteger(selectedOption) && selectedOption >= 0 && selectedOption < question.options.length))) {
+        return res.status(400).json({ message: "Each answer must identify a question in this attempt and use an available option or null" });
+      }
+      seen.add(questionId);
+      question.selectedOption = selectedOption;
+    }
+    await attempt.save();
+    res.json({ attempt: attemptView(attempt) });
+  } catch (error) { next(error); }
+});
+
 export default router;
