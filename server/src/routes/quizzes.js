@@ -109,4 +109,19 @@ router.post("/:quizId/questions", requireAuth, requireAdmin, async (req, res, ne
   } catch (error) { next(error); }
 });
 
+router.patch("/:quizId/questions/:questionId", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.quizId) || !mongoose.isValidObjectId(req.params.questionId)) return res.status(400).json({ message: "Invalid quiz or question identifier" });
+    const question = parseQuestion(req.body);
+    if (!question) return res.status(400).json({ message: "A question needs a prompt, 2–6 options, and a valid correctOption index" });
+    const quiz = await Quiz.findById(req.params.quizId);
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    const existing = quiz.questions.id(req.params.questionId);
+    if (!existing) return res.status(404).json({ message: "Question not found" });
+    existing.set(question);
+    await quiz.save();
+    res.json({ question: adminQuestion(existing) });
+  } catch (error) { next(error); }
+});
+
 export default router;
