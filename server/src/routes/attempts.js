@@ -44,4 +44,35 @@ async function finalizeExpired(attempt) {
   return attempt;
 }
 
+router.post("/", requireAuth, async (req, res, next) => {
+  try {
+    const { quizId } = req.body || {};
+    if (!mongoose.isValidObjectId(quizId)) return res.status(400).json({ message: "A valid quizId is required" });
+    const quiz = await Quiz.findOne({ _id: quizId, isPublished: true });
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    if (!quiz.questions.length) return res.status(409).json({ message: "This quiz has no questions yet" });
+    const startedAt = new Date();
+    const expiresAt = new Date(startedAt.getTime() + quiz.durationMinutes * 60_000);
+    const attempt = await Attempt.create({
+      user: req.user.id,
+      quiz: quiz.id,
+      quizTitle: quiz.title,
+      category: quiz.category,
+      difficulty: quiz.difficulty,
+      durationMinutes: quiz.durationMinutes,
+      startedAt,
+      expiresAt,
+      totalQuestions: quiz.questions.length,
+      questions: quiz.questions.map((question) => ({
+        questionId: question.id,
+        prompt: question.prompt,
+        options: question.options,
+        correctOption: question.correctOption,
+        selectedOption: null
+      }))
+    });
+    res.status(201).json({ attempt: attemptView(attempt) });
+  } catch (error) { next(error); }
+});
+
 export default router;
