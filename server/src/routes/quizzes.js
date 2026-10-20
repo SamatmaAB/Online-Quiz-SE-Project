@@ -124,4 +124,17 @@ router.patch("/:quizId/questions/:questionId", requireAuth, requireAdmin, async 
   } catch (error) { next(error); }
 });
 
+router.delete("/:quizId/questions/:questionId", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.quizId) || !mongoose.isValidObjectId(req.params.questionId)) return res.status(400).json({ message: "Invalid quiz or question identifier" });
+    const quiz = await Quiz.findById(req.params.quizId);
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    const question = quiz.questions.id(req.params.questionId);
+    if (!question) return res.status(404).json({ message: "Question not found" });
+    question.deleteOne();
+    await quiz.save();
+    res.status(204).end();
+  } catch (error) { next(error); }
+});
+
 export default router;
