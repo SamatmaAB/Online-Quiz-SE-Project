@@ -41,3 +41,15 @@ Send the login or registration token in the `Authorization: Bearer <token>` head
 
 Questions need 2–6 non-empty options. Correct answers are never included in catalog or start-attempt responses.
 
+### Timed attempts and results
+- `POST /api/attempts` (authenticated user) starts an attempt with `{ "quizId": "..." }`. The response includes `startedAt`, `expiresAt`, `remainingSeconds`, and the question set. The server snapshots questions and answer keys so later quiz edits cannot change an existing result.
+- `PATCH /api/attempts/:attemptId/answers` saves selected answers during an active attempt. Send the changed answer values as `{ "answers": [{ "questionId": "...", "selectedOption": 1 }] }`; an empty array leaves saved answers unchanged.
+- `GET /api/attempts/:attemptId` returns the current attempt. After it expires, this request records a timed-out submission with the answers saved so far.
+- `POST /api/attempts/:attemptId/submit` accepts `{ "answers": [{ "questionId": "...", "selectedOption": 1 }] }`. Submit all questions before the deadline; unanswered questions are permitted when the deadline has passed. Repeated submissions return the saved result without changing it.
+- `GET /api/attempts/mine` returns the signed-in user's attempt history, including correct-answer review for completed attempts.
+- `GET /api/attempts/admin/results` (admin) returns stored results for all users. Optional filters: `quizId` and `userId`.
+
+The client should display a countdown using `remainingSeconds`, save answers as the user selects them, and call the submit endpoint when it reaches zero. Expired attempts are also finalized as timed out on the next attempt read or history request.
+
+## Current scope
+This backend provides authentication, quiz catalog and administration, timed quiz attempts, submission and scoring, answer review, attempt history, and administrator result reporting. The repository does not yet include a client application.
