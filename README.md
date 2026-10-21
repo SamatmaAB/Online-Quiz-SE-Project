@@ -27,5 +27,17 @@ MERN-based online quiz system. The first implementation slice establishes the Ex
 
 Passwords are hashed with bcrypt and are never returned by the API. New accounts receive the standard `user` role; the public registration route cannot assign administrator privileges. Keep `server/.env` out of version control. The next client implementation can send the token as `Authorization: Bearer <token>`.
 
-## Current scope
-This branch is an incremental Sprint 1 implementation. Quiz catalog, category filtering, timed attempts, submission, score review, and administrator APIs are not implemented in this initial authentication slice yet.
+## Quiz and attempt API
+
+Send the login or registration token in the `Authorization: Bearer <token>` header for every authenticated endpoint. Administrator routes require a user whose database role is `admin`; public registration intentionally cannot grant that role. To promote a trusted account locally, connect to the configured database and run `db.users.updateOne({ email: "admin@example.com" }, { $set: { role: "admin" } })` in `mongosh`.
+
+### Quiz catalog
+- `GET /api/quizzes` lists published quizzes. Optional filters: `category` and `difficulty` (`easy`, `medium`, or `hard`).
+- `GET /api/quizzes/:quizId` returns quiz details and questions without answer keys.
+- `POST /api/quizzes` (admin) creates a quiz. Required fields: `title`, `category`, `difficulty`, and positive integer `durationMinutes` (maximum 600). Optional fields: `description`, `isPublished`, and `questions`.
+- `PATCH /api/quizzes/:quizId` (admin) updates quiz details, duration, difficulty, category, or publication status.
+- `POST /api/quizzes/:quizId/questions` (admin) adds a question. Use `{ "prompt": "...", "options": ["...", "..."], "correctOption": 0 }`; `correctOption` is a zero-based option index.
+- `PATCH /api/quizzes/:quizId/questions/:questionId` (admin) replaces a question. `DELETE` on the same path removes it.
+
+Questions need 2–6 non-empty options. Correct answers are never included in catalog or start-attempt responses.
+
