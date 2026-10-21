@@ -127,4 +127,44 @@ router.patch("/:attemptId/answers", requireAuth, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.post("/:attemptId/submit", requireAuth, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.attemptId)) return res.status(400).json({ message: "Invalid attempt identifier" });
+    const attempt = await Attempt.findById(req.params.attemptId);
+    if (!attempt) return res.status(404).json({ message: "Attempt not found" });
+    if (String(attempt.user) !== req.user.id && req.user.role !== "admin") return res.status(403).json({ message: "You cannot submit this attempt" });
+    if (attempt.status !== "in-progress") return res.json({ attempt: attemptView(attempt, { review: true }) });
+
+    const { answers } = req.body || {};
+    if (!Array.isArray(answers)) return res.status(400).json({ message: "answers must be an array of { questionId, selectedOption } values" });
+    const answersById = new Map();
+    for (const answer of answers) {
+      if (!answer || !mongoose.isValidObjectId(answer.questionId) ||
+          !(answer.selectedOption === null || (Number.isInteger(answer.selectedOption) && answer.selectedOption >= 0)) || answersById.has(String(answer.questionId))) {
+        return res.status(400).json({ message: "Each answer must contain a unique questionId and an integer selectedOption or null" });
+      }
+      answersById.set(String(answer.questionId), answer.selectedOption);
+    }
+    const questionIds = new Set(attempt.questions.map((question) => String(question.questionId)));
+    if ([...answersById.keys()].some((id) => !questionIds.has(id))) return res.status(400).json({ message: "Answers include a question that does not belong to this attempt" });
+    const timedOut = Date.now() >= attempt.expiresAt.getTime();
+    if (!timedOut && attempt.questions.some((question) => !answersById.has(String(question.questionId)) || answersById.get(String(question.questionId)) === null)) {
+      return res.status(400).json({ message: "Answer every question before submitting" });
+    }
+    for (const question of attempt.questions) {
+      const selectedOption = answersById.has(String(question.questionId))
+        ? answersById.get(String(question.questionId))
+        : timedOut ? question.selectedOption : null;
+      if (selectedOption !== null && (selectedOption < 0 || selectedOption >= question.options.length)) return res.status(400).json({ message: "An answer refers to an unavailable option" });
+      question.selectedOption = selectedOption;
+    }
+    Object.assign(attempt, calculateScore(attempt.questions, attempt.totalQuestions));
+    
+    attempt.status = timedOut ? "timed-out" : "submitted";
+    attempt.submittedAt = timedOut ? attempt.expiresAt : new Date();
+    await attempt.save();
+    res.json({ attempt: attemptView(attempt, { review: true }) });
+  } catch (error) { next(error); }
+});
+
 export default router;
