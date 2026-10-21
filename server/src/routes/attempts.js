@@ -34,10 +34,15 @@ function attemptView(attempt, { review = false, includeUser = false } = {}) {
   return result;
 }
 
+function calculateScore(questions, totalQuestions) {
+  const score = questions.reduce((total, question) => total + (question.selectedOption === question.correctOption ? 1 : 0), 0);
+  const percentage = totalQuestions ? Math.round((score / totalQuestions) * 10000) / 100 : 0;
+  return { score, percentage };
+}
 async function finalizeExpired(attempt) {
   if (attempt.status !== "in-progress" || attempt.expiresAt.getTime() > Date.now()) return attempt;
-  attempt.score = attempt.questions.reduce((total, question) => total + (question.selectedOption === question.correctOption ? 1 : 0), 0);
-  attempt.percentage = attempt.totalQuestions ? Math.round((attempt.score / attempt.totalQuestions) * 10000) / 100 : 0;
+  Object.assign(attempt, calculateScore(attempt.questions, attempt.totalQuestions));
+  
   attempt.status = "timed-out";
   attempt.submittedAt = attempt.expiresAt;
   await attempt.save();
