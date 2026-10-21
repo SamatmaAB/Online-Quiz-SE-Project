@@ -88,6 +88,23 @@ router.get("/mine", requireAuth, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+router.get("/admin/results", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const filter = {};
+    if (req.query.quizId !== undefined) {
+      if (!mongoose.isValidObjectId(req.query.quizId)) return res.status(400).json({ message: "Invalid quizId" });
+      filter.quiz = req.query.quizId;
+    }
+    if (req.query.userId !== undefined) {
+      if (!mongoose.isValidObjectId(req.query.userId)) return res.status(400).json({ message: "Invalid userId" });
+      filter.user = req.query.userId;
+    }
+    const attempts = await Attempt.find(filter).populate("user", "name email").sort({ createdAt: -1 }).limit(200);
+    for (const attempt of attempts) await finalizeExpired(attempt);
+    res.json({ attempts: attempts.map((attempt) => attemptView(attempt, { review: attempt.status !== "in-progress", includeUser: true })) });
+  } catch (error) { next(error); }
+});
+
 router.get("/:attemptId", requireAuth, async (req, res, next) => {
   try {
     if (!mongoose.isValidObjectId(req.params.attemptId)) return res.status(400).json({ message: "Invalid attempt identifier" });
