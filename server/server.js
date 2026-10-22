@@ -13,30 +13,38 @@ app.use(express.json());
 const quizzes = [
   {
     id: 1,
-    title: "JavaScript Basics",
-    description: "Test your knowledge of JavaScript fundamentals.",
-    category: "Programming",
-    totalQuestions: 10,
-    duration: 15,
-    available: true
+    title: "Software Engineering",
+    courseCode: "UE24CS341A",
+    category: "Core Course",
+    description: "Learn software development and engineering concepts."
   },
   {
     id: 2,
-    title: "DBMS Fundamentals",
-    description: "Test your understanding of database concepts.",
-    category: "Database",
-    totalQuestions: 15,
-    duration: 20,
-    available: true
+    title: "Data Analytics",
+    courseCode: "UE24CS342AA2",
+    category: "Elective",
+    description: "Explore data analysis and visualization concepts."
   },
   {
     id: 3,
-    title: "Data Structures",
-    description: "Practice questions on arrays, stacks, and queues.",
-    category: "Computer Science",
-    totalQuestions: 12,
-    duration: 18,
-    available: true
+    title: "Enterprise Business Systems",
+    courseCode: "UE24CS343AB8",
+    category: "Elective",
+    description: "Learn about enterprise systems and business processes."
+  },
+  {
+    id: 4,
+    title: "Database Management System",
+    courseCode: "UE24CS351A",
+    category: "Core Course",
+    description: "Practise database concepts and SQL fundamentals."
+  },
+  {
+    id: 5,
+    title: "Machine Learning",
+    courseCode: "UE24CS352A",
+    category: "Core Course",
+    description: "Explore machine learning algorithms and concepts."
   }
 ];
 
@@ -49,17 +57,14 @@ app.get("/", (req, res) => {
 
 // Get all available quizzes
 app.get("/api/quizzes", (req, res) => {
-  const availableQuizzes = quizzes.filter(
-    (quiz) => quiz.available === true
-  );
-
   res.status(200).json({
     success: true,
-    count: availableQuizzes.length,
-    quizzes: availableQuizzes
+    count: quizzes.length,
+    quizzes: quizzes
   });
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

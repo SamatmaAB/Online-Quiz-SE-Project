@@ -15,14 +15,14 @@ function App() {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to load quizzes.");
+          throw new Error("Failed to fetch subjects");
         }
 
         const data = await response.json();
-        setQuizzes(data.quizzes);
+        setQuizzes(data.quizzes || []);
       } catch (err) {
         setError(
-          "Unable to load quizzes. Please check whether the server is running."
+          "Unable to load subjects. Please make sure the backend server is running."
         );
       } finally {
         setLoading(false);
@@ -35,50 +35,64 @@ function App() {
   return (
     <main className="page">
       <header className="hero">
-        <p className="eyebrow">ONLINE LEARNING</p>
+        <p className="eyebrow">PES UNIVERSITY | SEMESTER 5</p>
+
         <h1>Available Quizzes</h1>
+
         <p>
-          Test your knowledge, practise your skills,
-          and track your learning.
+          Select a subject and prepare for your semester
+          exams with subject-wise quizzes.
         </p>
       </header>
 
       <section className="quiz-section">
         <div className="section-heading">
-          <h2>Explore Quizzes</h2>
+          <h2>Explore Your Subjects</h2>
+
           {!loading && !error && (
-            <span>{quizzes.length} quizzes available</span>
+            <span>{quizzes.length} subjects available</span>
           )}
         </div>
 
-        {loading && <p className="status">Loading quizzes...</p>}
+        {loading && (
+          <p className="status">Loading subjects...</p>
+        )}
 
         {error && <p className="error">{error}</p>}
 
         {!loading && !error && quizzes.length === 0 && (
-          <p className="status">No quizzes are available right now.</p>
+          <p className="status">
+            No subjects are available right now.
+          </p>
         )}
 
         {!loading && !error && quizzes.length > 0 && (
           <div className="quiz-grid">
             {quizzes.map((quiz) => (
               <article className="quiz-card" key={quiz.id}>
-                <span className="category">{quiz.category}</span>
-                <h3>{quiz.title}</h3>
-                <p className="description">{quiz.description}</p>
+                <span className="category">
+                  {quiz.category}
+                </span>
 
-                <div className="quiz-details">
-                  <span>📝 {quiz.totalQuestions} questions</span>
-                  <span>⏱️ {quiz.duration} minutes</span>
-                </div>
+                <h3>{quiz.title}</h3>
+
+                <p className="course-code">
+                  Course Code: {quiz.courseCode}
+                </p>
+
+                <p className="description">
+                  {quiz.description}
+                </p>
 
                 <button
                   className="start-button"
                   onClick={() =>
-                    alert(`You selected ${quiz.title}`)
+                    alert(
+                      `${quiz.title} selected. Quiz questions will be available soon!`
+                    )
                   }
                 >
-                  View Quiz
+                  View Quiz →
                 </button>
               </article>
             ))}
