@@ -1,8 +1,10 @@
 import { Router } from "express";
+import { createHash } from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import User from "../models/User.js";
+import RevokedToken from "../models/RevokedToken.js";
 
 const router = Router();
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
@@ -41,6 +43,28 @@ router.post("/login", authLimiter, async (req, res, next) => {
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) return res.status(401).json({ message: "Invalid email or password" });
     return res.json({ token: issueToken(user), user: publicUser(user) });
   } catch (error) { next(error); }
+});
+
+router.post("/logout", async (req, res) => {
+  const authorization = req.get("authorization") || "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return res.status(401).json({ message: "Authentication required" });
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    return res.status(500).json({ message: "Authentication is not configured" });
+  }
+  try {
+    const token = match[1];
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    await RevokedToken.updateOne(
+      { tokenHash },
+      { $setOnInsert: { tokenHash, expiresAt: new Date(payload.exp * 1000) } },
+      { upsert: true }
+    );
+    return res.json({ message: "Logged out successfully" });
+  } catch {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
 });
 
 export default router;

@@ -13,7 +13,7 @@ const attemptSchema = new mongoose.Schema({
   quiz: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz", required: true, index: true },
   quizTitle: { type: String, required: true },
   category: { type: String, required: true },
-  difficulty: { type: String, enum: ["easy", "medium", "hard"], required: true },
+  difficulty: { type: String, enum: ["easy", "medium", "hard", "beginner", "intermediate", "advanced"], required: true },
   durationMinutes: { type: Number, required: true },
   startedAt: { type: Date, required: true },
   expiresAt: { type: Date, required: true, index: true },

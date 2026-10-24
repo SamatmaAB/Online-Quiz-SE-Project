@@ -53,8 +53,9 @@ router.post("/", requireAuth, async (req, res, next) => {
   try {
     const { quizId } = req.body || {};
     if (!mongoose.isValidObjectId(quizId)) return res.status(400).json({ message: "A valid quizId is required" });
-    const quiz = await Quiz.findOne({ _id: quizId, isPublished: true });
-    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    const quiz = await Quiz.findOne({ _id: quizId, isPublished: true })
+      .populate({ path: "category", match: { isActive: true }, select: "name slug" });
+    if (!quiz || !quiz.category) return res.status(404).json({ message: "Quiz not found" });
     if (!quiz.questions.length) return res.status(409).json({ message: "This quiz has no questions yet" });
     const startedAt = new Date();
     const expiresAt = new Date(startedAt.getTime() + quiz.durationMinutes * 60_000);
@@ -62,7 +63,7 @@ router.post("/", requireAuth, async (req, res, next) => {
       user: req.user.id,
       quiz: quiz.id,
       quizTitle: quiz.title,
-      category: quiz.category,
+      category: quiz.category.name,
       difficulty: quiz.difficulty,
       durationMinutes: quiz.durationMinutes,
       startedAt,
