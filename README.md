@@ -32,6 +32,7 @@ A MERN-based online quiz system. This Sprint 1 branch provides secure account re
 ### Authentication
 - `POST /api/auth/register` with JSON `{ "name": "Ada Lovelace", "email": "ada@example.com", "password": "a-long-password" }`. Returns HTTP 201 with a bearer token and public profile.
 - `POST /api/auth/login` with JSON `{ "email": "ada@example.com", "password": "a-long-password" }`. Returns a token and public profile.
+- `POST /api/auth/logout` with `Authorization: Bearer <token>` revokes the current token until expiry; revoked tokens are stored as SHA-256 hashes and automatically expire from MongoDB.
 - Duplicate emails return HTTP 409; invalid inputs return HTTP 400; invalid credentials return HTTP 401.
 
 ### Quiz discovery
