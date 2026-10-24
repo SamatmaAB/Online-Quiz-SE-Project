@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchCategories, fetchQuizzes } from "./api.js";
+import AuthPanel from "./AuthPanel.jsx";
 
 const PAGE_SIZE = 9;
 
@@ -73,7 +74,7 @@ export default function App() {
     <main className="page-shell">
       <header className="site-header">
         <a className="brand" href="/" aria-label="Quizly home"><span className="brand-mark">Q</span> quizly</a>
-        <span className="header-note">Learn something new today</span>
+        <div className="header-actions"><span className="header-note">Learn something new today</span><AuthPanel /></div>
       </header>
 
       <section className="hero">
