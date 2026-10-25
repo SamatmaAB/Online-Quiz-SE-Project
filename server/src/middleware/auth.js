@@ -14,8 +14,9 @@ export async function requireAuth(req, res, next) {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const tokenHash = createHash("sha256").update(token).digest("hex");
     if (await RevokedToken.exists({ tokenHash })) return res.status(401).json({ message: "Session has been logged out" });
-    const user = await User.findById(payload.sub);
+    const user = await User.findById(payload.sub).select("+tokenVersion");
     if (!user) return res.status(401).json({ message: "Invalid or expired token" });
+    if ((payload.ver ?? 0) !== (user.tokenVersion || 0)) return res.status(401).json({ message: "Session has been revoked" });
     req.user = user;
     next();
   } catch (error) {

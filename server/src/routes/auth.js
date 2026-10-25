@@ -14,7 +14,7 @@ function publicUser(user) {
 }
 function issueToken(user) {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) throw new Error("JWT_SECRET must be set to a random value of at least 32 characters");
-  return jwt.sign({ sub: user.id }, process.env.JWT_SECRET, { expiresIn: "2h" });
+  return jwt.sign({ sub: user.id, ver: user.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: "2h" });
 }
 
 router.post("/register", authLimiter, async (req, res, next) => {
@@ -39,7 +39,7 @@ router.post("/login", authLimiter, async (req, res, next) => {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
-    const user = await User.findOne({ email }).select("+passwordHash");
+    const user = await User.findOne({ email }).select("+passwordHash +tokenVersion");
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) return res.status(401).json({ message: "Invalid email or password" });
     return res.json({ token: issueToken(user), user: publicUser(user) });
   } catch (error) { next(error); }
