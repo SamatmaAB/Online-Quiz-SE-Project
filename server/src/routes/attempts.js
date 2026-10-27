@@ -3,51 +3,9 @@ import mongoose from "mongoose";
 import Attempt from "../models/Attempt.js";
 import Quiz from "../models/Quiz.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
+import { attemptView, calculateScore, finalizeExpiredAttempts } from "../services/attempts.js";
 
 const router = Router();
-
-function attemptView(attempt, { review = false, includeUser = false } = {}) {
-  const result = {
-    id: attempt.id,
-    quiz: { id: attempt.quiz, title: attempt.quizTitle, category: attempt.category, difficulty: attempt.difficulty },
-    durationMinutes: attempt.durationMinutes,
-    startedAt: attempt.startedAt,
-    expiresAt: attempt.expiresAt,
-    submittedAt: attempt.submittedAt,
-    status: attempt.status,
-    score: attempt.score,
-    totalQuestions: attempt.totalQuestions,
-    percentage: attempt.percentage,
-    questions: attempt.questions.map((question) => ({
-      id: question.questionId,
-      prompt: question.prompt,
-      options: question.options,
-      selectedOption: question.selectedOption,
-      ...(review ? { correctOption: question.correctOption, isCorrect: question.selectedOption === question.correctOption } : {})
-    })),
-    createdAt: attempt.createdAt
-  };
-  if (includeUser) result.user = attempt.user && typeof attempt.user === "object" && attempt.user.name
-    ? { id: attempt.user.id, name: attempt.user.name, email: attempt.user.email }
-    : { id: attempt.user };
-  if (attempt.status === "in-progress") result.remainingSeconds = Math.max(0, Math.ceil((attempt.expiresAt.getTime() - Date.now()) / 1000));
-  return result;
-}
-
-function calculateScore(questions, totalQuestions) {
-  const score = questions.reduce((total, question) => total + (question.selectedOption === question.correctOption ? 1 : 0), 0);
-  const percentage = totalQuestions ? Math.round((score / totalQuestions) * 10000) / 100 : 0;
-  return { score, percentage };
-}
-async function finalizeExpired(attempt) {
-  if (attempt.status !== "in-progress" || attempt.expiresAt.getTime() > Date.now()) return attempt;
-  Object.assign(attempt, calculateScore(attempt.questions, attempt.totalQuestions));
-  
-  attempt.status = "timed-out";
-  attempt.submittedAt = attempt.expiresAt;
-  await attempt.save();
-  return attempt;
-}
 
 router.post("/", requireAuth, async (req, res, next) => {
   try {
@@ -84,7 +42,7 @@ router.post("/", requireAuth, async (req, res, next) => {
 router.get("/mine", requireAuth, async (req, res, next) => {
   try {
     const attempts = await Attempt.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(100);
-    for (const attempt of attempts) await finalizeExpired(attempt);
+    await finalizeExpiredAttempts(attempts);
     res.json({ attempts: attempts.map((attempt) => attemptView(attempt, { review: attempt.status !== "in-progress" })) });
   } catch (error) { next(error); }
 });
@@ -101,7 +59,7 @@ router.get("/admin/results", requireAuth, requireAdmin, async (req, res, next) =
       filter.user = req.query.userId;
     }
     const attempts = await Attempt.find(filter).populate("user", "name email").sort({ createdAt: -1 }).limit(200);
-    for (const attempt of attempts) await finalizeExpired(attempt);
+    await finalizeExpiredAttempts(attempts);
     res.json({ attempts: attempts.map((attempt) => attemptView(attempt, { review: attempt.status !== "in-progress", includeUser: true })) });
   } catch (error) { next(error); }
 });
@@ -112,7 +70,7 @@ router.get("/:attemptId", requireAuth, async (req, res, next) => {
     const attempt = await Attempt.findById(req.params.attemptId);
     if (!attempt) return res.status(404).json({ message: "Attempt not found" });
     if (String(attempt.user) !== req.user.id && req.user.role !== "admin") return res.status(403).json({ message: "You cannot access this attempt" });
-    await finalizeExpired(attempt);
+    await finalizeExpiredAttempts([attempt]);
     res.json({ attempt: attemptView(attempt, { review: attempt.status !== "in-progress" }) });
   } catch (error) { next(error); }
 });
@@ -123,7 +81,7 @@ router.patch("/:attemptId/answers", requireAuth, async (req, res, next) => {
     const attempt = await Attempt.findById(req.params.attemptId);
     if (!attempt) return res.status(404).json({ message: "Attempt not found" });
     if (String(attempt.user) !== req.user.id) return res.status(403).json({ message: "You cannot update this attempt" });
-    await finalizeExpired(attempt);
+    await finalizeExpiredAttempts([attempt]);
     if (attempt.status !== "in-progress") return res.status(409).json({ message: "This attempt is already closed" });
     const { answers } = req.body || {};
     if (!Array.isArray(answers)) return res.status(400).json({ message: "answers must be an array of { questionId, selectedOption } values" });
