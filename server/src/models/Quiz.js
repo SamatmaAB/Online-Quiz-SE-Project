@@ -30,5 +30,7 @@ const quizSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 quizSchema.index({ isPublished: 1, publishedAt: -1 });
+quizSchema.index({ isPublished: 1, category: 1, publishedAt: -1, _id: 1 });
+quizSchema.index({ isPublished: 1, difficulty: 1, publishedAt: -1, _id: 1 });
 quizSchema.index({ title: "text", description: "text" });
 export default mongoose.model("Quiz", quizSchema);

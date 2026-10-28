@@ -36,9 +36,35 @@ export function calculateScore(questions, totalQuestions) {
 
 export async function finalizeExpiredAttempts(attempts, now = new Date()) {
   const expired = attempts.filter((attempt) => attempt.status === "in-progress" && attempt.expiresAt <= now);
-  await Promise.all(expired.map(async (attempt) => {
-    const result = calculateScore(attempt.questions, attempt.totalQuestions);
-    attempt.set({ ...result, status: "timed-out", submittedAt: attempt.expiresAt });
-    await attempt.save();
+  if (!expired.length) return;
+
+  const updates = expired.map((attempt) => ({
+    attempt,
+    result: calculateScore(attempt.questions, attempt.totalQuestions)
   }));
+  const write = await Attempt.bulkWrite(updates.map(({ attempt, result }) => ({
+    updateOne: {
+      filter: { _id: attempt._id, status: "in-progress", expiresAt: { $lte: now } },
+      update: { $set: { ...result, status: "timed-out", submittedAt: attempt.expiresAt } }
+    }
+  })), { ordered: false });
+
+  for (const { attempt, result } of updates) {
+    attempt.set({ ...result, status: "timed-out", submittedAt: attempt.expiresAt });
+  }
+
+  if (write.matchedCount !== updates.length) {
+    const refreshed = await Attempt.find({ _id: { $in: expired.map((attempt) => attempt._id) } });
+    const byId = new Map(refreshed.map((attempt) => [String(attempt._id), attempt]));
+    for (const attempt of expired) {
+      const latest = byId.get(String(attempt._id));
+      if (latest) attempt.set({
+        status: latest.status,
+        score: latest.score,
+        percentage: latest.percentage,
+        submittedAt: latest.submittedAt,
+        questions: latest.questions
+      });
+    }
+  }
 }
