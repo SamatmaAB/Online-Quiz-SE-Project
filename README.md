@@ -35,8 +35,11 @@ MERN-based online quiz system with secure account access, a searchable quiz cata
 - `POST /api/auth/login` with `{ "email": "ada@example.com", "password": "a-long-password" }` returns a token and public profile.
 - `POST /api/auth/logout` with `Authorization: Bearer <token>` revokes the token until it expires. Revoked tokens are stored as SHA-256 hashes and expire automatically.
 - Duplicate emails return HTTP 409; invalid inputs return HTTP 400; invalid credentials return HTTP 401.
+- `POST /api/auth/password-reset/request` accepts an email address and returns the same response whether or not the account exists. `POST /api/auth/password-reset/complete` accepts `{ "token": "...", "password": "..." }`.
 
 Passwords are hashed and never returned. Public registration always assigns the `user` role; clients cannot self-assign administrator privileges. Keep `server/.env` out of version control.
+
+Password reset emails require `SMTP_HOST`, `SMTP_PORT`, `MAIL_FROM`, and optional `SMTP_USER`/`SMTP_PASS` and `SMTP_SECURE` settings. Reset links expire after 15 minutes, are stored only as SHA-256 hashes, and can be used once. A successful reset invalidates existing login tokens. The request endpoint is rate limited and does not reveal whether an email belongs to an account.
 
 ### Quiz discovery
 
@@ -72,7 +75,7 @@ The client can display a countdown using `remainingSeconds`, save answers as the
 
 ## Client
 
-The catalog UI includes search, category filters, pagination, and loading, error, and empty states. It also provides registration, login, and logout controls.
+The client includes a responsive searchable quiz catalog, category filters, timed quiz attempts, answer selection and submission, score review with correct and incorrect answers, and registration, login, logout, and password reset controls.
 
 ## Checks
 
