@@ -89,7 +89,7 @@ export default function AuthPanel({ session, onSessionChange }) {
     </button>
     <form className="auth-popover" onSubmit={mode === "request-reset" || mode === "complete-reset" ? submitPasswordReset : submit}>
       <h2>{mode === "register" ? "Create your account" : mode === "request-reset" ? "Reset your password" : mode === "complete-reset" ? "Choose a new password" : "Welcome back"}</h2>
-      <p>{mode === "register" ? "Join in and start exploring." : mode === "request-reset" ? "We’ll email you a one-time reset link if the account exists." : mode === "complete-reset" ? "Choose a new password for your Quizly account." : "Sign in to your Quizly account."}</p>
+      <p>{mode === "register" ? "Join in and start exploring." : mode === "request-reset" ? "We’ll email you a one-time reset link if the account exists." : mode === "complete-reset" ? "Choose a new password for your Online Quiz System account." : "Sign in to your Online Quiz System account."}</p>
       {mode === "register" && <label>Full name<input name="name" value={form.name} onChange={update} minLength={2} maxLength={80} autoComplete="name" required /></label>}
       {(mode === "login" || mode === "register" || mode === "request-reset") && <label>Email address<input type="email" name="email" value={form.email} onChange={update} autoComplete="email" maxLength={254} required /></label>}
       {(mode === "login" || mode === "register" || mode === "complete-reset") && <label>{mode === "complete-reset" ? "New password" : "Password"}<input type="password" name="password" value={form.password} onChange={update} minLength={8} maxLength={72} autoComplete={mode === "login" ? "current-password" : "new-password"} required /></label>}
