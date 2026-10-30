@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { completePasswordReset, requestPasswordReset } from "./api.js";
+import { completePasswordReset, loginAccount, logoutAccount, registerAccount, requestPasswordReset } from "./api.js";
 
 const initialResetToken = new URLSearchParams(window.location.search).get("resetToken") || "";
 if (initialResetToken) window.history.replaceState({}, document.title, window.location.pathname);
@@ -22,13 +22,9 @@ export default function AuthPanel({ session, onSessionChange }) {
     setError("");
     setMessage("");
     try {
-      const response = await fetch(`/api/auth/${mode === "register" ? "register" : "login"}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(form)
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || "Unable to authenticate");
+      const data = mode === "register"
+        ? await registerAccount(form)
+        : await loginAccount(form);
       const nextSession = { token: data.token, user: data.user };
       onSessionChange(nextSession);
       setForm({ name: "", email: "", password: "", confirmPassword: "" });
@@ -44,12 +40,7 @@ export default function AuthPanel({ session, onSessionChange }) {
     setBusy(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.token}`, Accept: "application/json" }
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || "Unable to log out");
+      await logoutAccount(session.token);
       onSessionChange(null);
       setMessage("You have been logged out.");
     } catch (err) {
@@ -114,3 +105,4 @@ export default function AuthPanel({ session, onSessionChange }) {
     </form>
   </div>;
 }
+
