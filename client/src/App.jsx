@@ -149,7 +149,7 @@ export default function App() {
   return (
     <main className="page-shell">
       <header className="site-header">
-        <a className="brand" href="/" aria-label="Quizly home"><span className="brand-mark">Q</span> quizly</a>
+        <a className="brand" href="/" aria-label="Online Quiz System home"><span className="brand-mark">Q</span> Online Quiz System</a>
         <div className="header-actions"><span className="header-note">Learn something new today</span><AuthPanel session={session} onSessionChange={setSession} /></div>
       </header>
 
@@ -211,7 +211,7 @@ export default function App() {
           <button type="button" disabled={page >= catalog.pagination.pages} onClick={() => setPage((value) => value + 1)}>Next →</button>
         </nav>}
       </section>
-      <footer className="site-footer"><a className="brand" href="/"><span className="brand-mark">Q</span> quizly</a><span>Small steps. Big discoveries.</span></footer>
+      <footer className="site-footer"><a className="brand" href="/"><span className="brand-mark">Q</span> Online Quiz System</a><span>Small steps. Big discoveries.</span></footer>
     </main>
   );
 }
