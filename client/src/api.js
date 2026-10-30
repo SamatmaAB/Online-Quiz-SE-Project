@@ -2,7 +2,8 @@ async function request(path, { signal, method = "GET", body, token } = {}) {
   const headers = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
-  const response = await fetch(path, {
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\\/+$/, "");
+  const response = await fetch(`${apiBaseUrl}${path}`, {
     method,
     headers,
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
