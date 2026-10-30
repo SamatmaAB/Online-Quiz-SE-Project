@@ -1,4 +1,4 @@
-# Quizly client
+# Online Quiz System client
 
 React + Vite interface for browsing published quizzes and filtering by category or title.
 
