@@ -36,7 +36,7 @@ export async function sendPasswordResetEmail({ transport, from, to, token, clien
   await transport.sendMail({
     from,
     to,
-    subject: "Reset your Quizly password",
+    subject: "Reset your Online Quiz System password",
     text: `Use this one-time link to reset your password within 15 minutes:\n\n${resetUrl.href}\n\nIf you did not request this, you can ignore this email.`,
     html: `<p>Use this one-time link to reset your password within 15 minutes:</p><p><a href="${resetUrl.href}">Reset password</a></p><p>If you did not request this, you can ignore this email.</p>`
   });
