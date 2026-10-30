@@ -43,6 +43,18 @@ export function submitAttempt(attemptId, answers, token) {
   });
 }
 
+export function registerAccount({ name, email, password }) {
+  return request("/api/auth/register", { method: "POST", body: { name, email, password } });
+}
+
+export function loginAccount({ email, password }) {
+  return request("/api/auth/login", { method: "POST", body: { email, password } });
+}
+
+export function logoutAccount(token) {
+  return request("/api/auth/logout", { method: "POST", token });
+}
+
 export function requestPasswordReset(email) {
   return request("/api/auth/password-reset/request", { method: "POST", body: { email } });
 }
@@ -50,3 +62,4 @@ export function requestPasswordReset(email) {
 export function completePasswordReset(token, password) {
   return request("/api/auth/password-reset/complete", { method: "POST", body: { token, password } });
 }
+
