@@ -1,0 +1,354 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: #f4f7fc;
+  color: #17233d;
+}
+
+button {
+  font: inherit;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 42px 6%;
+}
+
+/* Header */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 48px 44px;
+  border-radius: 22px;
+  color: white;
+  background: linear-gradient(125deg, #142d63, #2459ad);
+  box-shadow: 0 12px 32px rgba(28, 62, 125, 0.16);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  right: -65px;
+  top: -100px;
+  border: 38px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  color: #c9dcff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.hero h1 {
+  margin: 0 0 14px;
+  font-size: clamp(30px, 4vw, 43px);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.hero > p:last-child {
+  max-width: 600px;
+  margin: 0;
+  color: #e0eaff;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* Subject section */
+.quiz-section {
+  padding: 38px 0;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #172b50;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.section-heading span {
+  padding: 9px 14px;
+  border: 1px solid #dbe6fa;
+  border-radius: 30px;
+  background: #eaf1ff;
+  color: #2452a0;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Responsive card layout */
+.quiz-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.quiz-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 25px;
+  border: 1px solid #e4eaf4;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(29, 52, 91, 0.045);
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.quiz-card:hover {
+  transform: translateY(-5px);
+  border-color: #c6d8fb;
+  box-shadow: 0 14px 30px rgba(29, 64, 125, 0.11);
+}
+
+/* Category label */
+.category {
+  display: inline-block;
+  margin-bottom: 18px;
+  padding: 7px 11px;
+  border-radius: 7px;
+  background: #eaf1ff;
+  color: #2856a3;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.quiz-card h3 {
+  margin: 0 0 12px;
+  color: #1c2e50;
+  font-size: 19px;
+  line-height: 1.5;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.course-code {
+  margin: 0 0 14px;
+  color: #315ba2;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  flex-grow: 1;
+  margin: 0 0 24px;
+  color: #69758a;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Button */
+.start-button {
+  width: 100%;
+  padding: 13px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #2456a6;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.start-button:hover {
+  background: #173e80;
+  transform: translateY(-1px);
+}
+
+.start-button:focus-visible {
+  outline: 3px solid #9bbcff;
+  outline-offset: 3px;
+}
+
+/* Loading and error messages */
+.status,
+.error {
+  padding: 24px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #58667d;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.error {
+  color: #b42318;
+  background: #fff1f0;
+}
+
+/* Tablet */
+@media (max-width: 1000px) {
+  .quiz-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page {
+    padding: 30px 4%;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .page {
+    padding: 18px 16px;
+  }
+
+  .hero {
+    padding: 32px 24px;
+    border-radius: 16px;
+  }
+
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .hero > p:last-child {
+    font-size: 14px;
+  }
+
+  .quiz-section {
+    padding-top: 30px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-heading h2 {
+    font-size: 21px;
+  }
+
+  .quiz-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .quiz-card {
+    padding: 22px;
+  }
+}
+
+/* Search, category and sorting controls */
+.quiz-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr) minmax(180px, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+  padding: 22px;
+  border: 1px solid #e4eaf4;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.control-group label {
+  color: #263b60;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.control-group input,
+.control-group select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #ccd7e8;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #17233d;
+  font: inherit;
+  font-size: 13px;
+}
+
+.control-group input:focus-visible,
+.control-group select:focus-visible {
+  outline: 3px solid #b5ccff;
+  outline-offset: 2px;
+  border-color: #2456a6;
+}
+
+/* Quiz duration */
+.quiz-duration {
+  margin: 0 0 20px;
+  color: #586987;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 30px;
+}
+
+.pagination span {
+  color: #263b60;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pagination button {
+  padding: 10px 16px;
+  border: 1px solid #cbd8ed;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #2456a6;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #eaf1ff;
+}
+
+.pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Responsive controls */
+@media (max-width: 800px) {
+  .quiz-controls {
+    grid-template-columns: 1fr;
+  }
+}
