@@ -1,250 +1,217 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchCategories, fetchQuizzes, saveAttemptAnswers, startAttempt, submitAttempt } from "./api.js";
+import AuthPanel from "./AuthPanel.jsx";
+import AttemptPanel from "./AttemptPanel.jsx";
 
-import { useEffect, useState } from "react";
-import "./App.css";
+const PAGE_SIZE = 9;
 
-const PAGE_SIZE = 6;
-
-const sortOptions = [
-  { value: "title-asc", label: "Title: A–Z" },
-  { value: "title-desc", label: "Title: Z–A" },
-  { value: "duration-asc", label: "Shortest duration" },
-  { value: "newest", label: "Newest first" },
-];
-
-function App() {
-  const [quizzes, setQuizzes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [sort, setSort] = useState("title-asc");
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-  const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function fetchQuizzes() {
-      setLoading(true);
-      setError("");
-
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/quizzes?sort=${encodeURIComponent(sort)}`,
-          { signal: controller.signal }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch quizzes.");
-        }
-
-        setQuizzes(data.quizzes || []);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setError(
-            "Unable to load quizzes. Please make sure the backend server is running."
-          );
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchQuizzes();
-
-    return () => controller.abort();
-  }, [sort]);
-
-  const categories = [
-    "All",
-    ...new Set(quizzes.map((quiz) => quiz.category).filter(Boolean)),
-  ];
-
-  const filteredQuizzes = quizzes.filter((quiz) => {
-    const searchText = search.trim().toLowerCase();
-
-    const matchesSearch =
-      quiz.title.toLowerCase().includes(searchText) ||
-      (quiz.courseCode || "").toLowerCase().includes(searchText) ||
-      (quiz.description || "").toLowerCase().includes(searchText);
-
-    const matchesCategory =
-      category === "All" || quiz.category === category;
-
-    return matchesSearch && matchesCategory;
-  });
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredQuizzes.length / PAGE_SIZE)
-  );
-
-  const currentPage = Math.min(page, totalPages);
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-
-  const visibleQuizzes = filteredQuizzes.slice(
-    startIndex,
-    startIndex + PAGE_SIZE
-  );
-
-  function handleSortChange(event) {
-    setSort(event.target.value);
-    setPage(1);
-  }
-
-  function handleSearchChange(event) {
-    setSearch(event.target.value);
-    setPage(1);
-  }
-
-  function handleCategoryChange(event) {
-    setCategory(event.target.value);
-    setPage(1);
-  }
-
+function QuizCard({ quiz, signedIn, onStart, busy }) {
+  const difficulty = quiz.difficulty || "beginner";
   return (
-    <main className="page">
-      <header className="hero">
-        <p className="eyebrow">PES UNIVERSITY | SEMESTER 5</p>
-
-        <h1>Available Quizzes</h1>
-
-        <p>
-          Select a subject and prepare for your semester
-          exams with subject-wise quizzes.
-        </p>
-      </header>
-
-      <section className="quiz-section">
-        <div className="section-heading">
-          <h2>Explore Your Subjects</h2>
-
-          {!loading && !error && (
-            <span>
-              {filteredQuizzes.length}{" "}
-              {filteredQuizzes.length === 1 ? "subject" : "subjects"} found
-            </span>
-          )}
-        </div>
-
-        <div className="quiz-controls">
-          <div className="control-group search-control">
-            <label htmlFor="quiz-search">Search subjects</label>
-            <input
-              id="quiz-search"
-              type="search"
-              placeholder="Search by title, code, or description"
-              value={search}
-              onChange={handleSearchChange}
-            />
-          </div>
-
-          <div className="control-group">
-            <label htmlFor="quiz-category">Category</label>
-            <select
-              id="quiz-category"
-              value={category}
-              onChange={handleCategoryChange}
-            >
-              {categories.map((item) => (
-                <option key={item} value={item}>
-                  {item === "All" ? "All categories" : item}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="control-group">
-            <label htmlFor="quiz-sort">Sort quizzes by</label>
-            <select
-              id="quiz-sort"
-              value={sort}
-              onChange={handleSortChange}
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {loading && <p className="status">Loading quizzes...</p>}
-
-        {error && <p className="error">{error}</p>}
-
-        {!loading && !error && filteredQuizzes.length === 0 && (
-          <p className="status">
-            No quizzes match your search or category. Try changing your filters.
-          </p>
-        )}
-
-        {!loading && !error && visibleQuizzes.length > 0 && (
-          <>
-            <div className="quiz-grid">
-              {visibleQuizzes.map((quiz) => (
-                <article className="quiz-card" key={quiz.id}>
-                  <span className="category">{quiz.category}</span>
-
-                  <h3>{quiz.title}</h3>
-
-                  <p className="course-code">
-                    Course Code: {quiz.courseCode}
-                  </p>
-
-                  <p className="description">{quiz.description}</p>
-
-                  {Number.isFinite(Number(quiz.duration)) && (
-                    <p className="quiz-duration">
-                      <span aria-hidden="true">◷</span>{" "}
-                      {quiz.duration} minutes
-                    </p>
-                  )}
-
-                  <button
-                    className="start-button"
-                    onClick={() =>
-                      alert(
-                        `${quiz.title} selected. Quiz questions will be available soon!`
-                      )
-                    }
-                  >
-                    View Quiz →
-                  </button>
-                </article>
-              ))}
-            </div>
-
-            <nav className="pagination" aria-label="Quiz pages">
-              <button
-                type="button"
-                onClick={() => setPage((current) => current - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-
-              <span aria-live="polite">
-                Page {currentPage} of {totalPages}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setPage((current) => current + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
-            </nav>
-          </>
-        )}
-      </section>
-    </main>
+    <article className="quiz-card">
+      <div className="card-topline">
+        <span className="category-pill">{quiz.category?.name || "General"}</span>
+        <span className={`difficulty difficulty-${difficulty}`}>{difficulty}</span>
+      </div>
+      <h2>{quiz.title}</h2>
+      <p className="quiz-description">{quiz.description || "Test your knowledge with this quiz."}</p>
+      <div className="quiz-meta">
+        <span><span aria-hidden="true">◷</span> {quiz.durationMinutes} min</span>
+        <span><span aria-hidden="true">▤</span> {quiz.totalQuestions} questions</span>
+      </div>
+      <button className="start-button" type="button" disabled={!signedIn || busy} onClick={() => onStart(quiz)} title={!signedIn ? "Sign in to start this quiz" : "Start a timed quiz attempt"}>
+        {busy ? "Starting…" : signedIn ? "Start quiz" : "Sign in to start"} <span aria-hidden="true">→</span>
+      </button>
+    </article>
   );
 }
 
-export default App;
+export default function App() {
+  const [categories, setCategories] = useState([]);
+  const [category, setCategory] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [catalog, setCatalog] = useState({ quizzes: [], pagination: { page: 1, pages: 0, total: 0 } });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [session, setSession] = useState(null);
+  const [activeAttempt, setActiveAttempt] = useState(null);
+  const [attemptBusy, setAttemptBusy] = useState(false);
+  const [attemptError, setAttemptError] = useState("");
+  const [saveState, setSaveState] = useState("");
+  const saveTimer = useRef(null);
+  const submitLock = useRef(false);
+
+  useEffect(() => () => window.clearTimeout(saveTimer.current), []);
+  useEffect(() => {
+    if (!session) {
+      window.clearTimeout(saveTimer.current);
+      setActiveAttempt(null);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchCategories(controller.signal)
+      .then((data) => setCategories(data.categories || []))
+      .catch((err) => { if (err.name !== "AbortError") setError(err.message); });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    fetchQuizzes({ category, search, page, limit: PAGE_SIZE }, controller.signal)
+      .then(setCatalog)
+      .catch((err) => { if (err.name !== "AbortError") setError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [category, search, page]);
+
+  const activeCategoryName = useMemo(
+    () => categories.find((item) => item.slug === category)?.name,
+    [categories, category]
+  );
+
+  function submitSearch(event) {
+    event.preventDefault();
+    setPage(1);
+    setSearch(searchInput.trim());
+  }
+
+  function selectCategory(slug) {
+    setCategory(slug);
+    setPage(1);
+  }
+
+  async function beginAttempt(quiz) {
+    if (!session || attemptBusy) return;
+    setAttemptBusy(true);
+    setAttemptError("");
+    setSaveState("");
+    submitLock.current = false;
+    try {
+      const data = await startAttempt(quiz.id, session.token);
+      setActiveAttempt(data.attempt);
+    } catch (err) {
+      setAttemptError(err.message);
+    } finally {
+      setAttemptBusy(false);
+    }
+  }
+
+  function changeAnswer(questionId, selectedOption) {
+    if (!activeAttempt || activeAttempt.status !== "in-progress") return;
+    const questions = activeAttempt.questions.map((question) => question.id === questionId ? { ...question, selectedOption } : question);
+    const updatedAttempt = { ...activeAttempt, questions };
+    setActiveAttempt(updatedAttempt);
+    setSaveState("Saving answers…");
+    setAttemptError("");
+    window.clearTimeout(saveTimer.current);
+    const answers = questions.map((question) => ({ questionId: question.id, selectedOption: question.selectedOption }));
+    saveTimer.current = window.setTimeout(async () => {
+      try {
+        await saveAttemptAnswers(updatedAttempt.id, answers, session.token);
+        setSaveState("Answers saved");
+      } catch (err) {
+        setSaveState("");
+        setAttemptError(err.message);
+      }
+    }, 350);
+  }
+
+  async function handleSubmit(timedOut = false) {
+    if (!activeAttempt || activeAttempt.status !== "in-progress" || submitLock.current) return;
+    if (!timedOut && activeAttempt.questions.some((question) => question.selectedOption === null)) {
+      setAttemptError("Answer every question before submitting.");
+      return;
+    }
+    submitLock.current = true;
+    window.clearTimeout(saveTimer.current);
+    setAttemptBusy(true);
+    setAttemptError("");
+    setSaveState("");
+    try {
+      const answers = activeAttempt.questions.map((question) => ({ questionId: question.id, selectedOption: question.selectedOption }));
+      const data = await submitAttempt(activeAttempt.id, answers, session.token);
+      setActiveAttempt(data.attempt);
+      setSaveState("");
+    } catch (err) {
+      setAttemptError(err.message);
+      submitLock.current = false;
+    } finally {
+      setAttemptBusy(false);
+    }
+  }
+
+  return (
+    <main className="page-shell">
+      <header className="site-header">
+        <a className="brand" href="/" aria-label="Quizly home"><span className="brand-mark">Q</span> quizly</a>
+        <div className="header-actions"><span className="header-note">Learn something new today</span><AuthPanel session={session} onSessionChange={setSession} /></div>
+      </header>
+
+      {activeAttempt && <AttemptPanel
+        attempt={activeAttempt}
+        busy={attemptBusy}
+        saveState={saveState}
+        error={attemptError}
+        onAnswerChange={changeAnswer}
+        onSubmit={handleSubmit}
+        onClose={() => { setActiveAttempt(null); setAttemptError(""); setSaveState(""); }}
+      />}
+
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow">YOUR NEXT CHALLENGE STARTS HERE</p>
+          <h1>Curiosity looks<br /><span>good on you.</span></h1>
+          <p className="hero-description">Explore topics, test what you know, and discover what you can learn next.</p>
+          <form className="search-form" onSubmit={submitSearch}>
+            <label className="sr-only" htmlFor="quiz-search">Search quizzes</label>
+            <span aria-hidden="true" className="search-icon">⌕</span>
+            <input id="quiz-search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Search topics or quizzes..." maxLength={100} />
+            <button type="submit">Search</button>
+          </form>
+        </div>
+        <div className="hero-art" aria-hidden="true">
+          <div className="orbit orbit-one"></div><div className="orbit orbit-two"></div>
+          <div className="floating-card card-book">✦ <span>Keep exploring</span></div>
+          <div className="hero-bubble"><span>Q</span></div>
+          <div className="floating-card card-score"><strong>+1</strong><span>New thing learned</span></div>
+        </div>
+      </section>
+
+      <section className="catalog-section" aria-labelledby="catalog-heading">
+        <div className="section-heading">
+          <div><p className="eyebrow">THE LIBRARY</p><h2 id="catalog-heading">Find your next <span>quiz.</span></h2></div>
+          <p className="result-count">{catalog.pagination.total || 0} quizzes to explore</p>
+        </div>
+
+        <div className="category-list" aria-label="Filter quizzes by category">
+          <button className={!category ? "category-filter active" : "category-filter"} onClick={() => selectCategory("")} type="button">All topics</button>
+          {categories.map((item) => (
+            <button key={item.id} className={category === item.slug ? "category-filter active" : "category-filter"} onClick={() => selectCategory(item.slug)} type="button">
+              {item.name}
+            </button>
+          ))}
+        </div>
+
+        {activeCategoryName && <p className="filter-summary">Showing quizzes in <strong>{activeCategoryName}</strong></p>}
+        {error && <div className="notice error-notice" role="alert"><strong>We couldn’t load the quiz library.</strong><span>{error}</span><button onClick={() => { setError(""); setPage(1); setSearch(search); }} type="button">Try again</button></div>}
+        {loading ? <div className="empty-state" role="status"><span className="loader"></span><p>Finding your next challenge…</p></div> :
+          !error && catalog.quizzes.length === 0 ? <div className="empty-state"><span className="empty-icon">⌕</span><h3>No quizzes found</h3><p>Try another search or choose a different topic.</p><button className="text-button" onClick={() => { setCategory(""); setSearch(""); setSearchInput(""); setPage(1); }} type="button">Clear filters</button></div> :
+          !error && <div className="quiz-grid">{catalog.quizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} signedIn={Boolean(session)} busy={attemptBusy} onStart={beginAttempt} />)}</div>
+        }
+
+        {!loading && !error && catalog.pagination.pages > 1 && <nav className="pagination" aria-label="Quiz pages">
+          <button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>← Previous</button>
+          <span>Page {page} of {catalog.pagination.pages}</span>
+          <button type="button" disabled={page >= catalog.pagination.pages} onClick={() => setPage((value) => value + 1)}>Next →</button>
+        </nav>}
+      </section>
+      <footer className="site-footer"><a className="brand" href="/"><span className="brand-mark">Q</span> quizly</a><span>Small steps. Big discoveries.</span></footer>
+    </main>
+  );
+}
