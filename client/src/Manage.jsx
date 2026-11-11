@@ -1,14 +1,21 @@
 import { useState } from "react";
 import {
   createAdminCategory, deleteQuiz, fetchAdminCategories, fetchAdminOverview, fetchAdminResults, fetchAdminUsers,
-  fetchMyAttempts, fetchMyQuizzes, patchQuiz, setUserRole, updateAdminCategory
+  fetchMyAttempts, fetchMyQuizzes, fetchSubjects, patchQuiz, setUserRole, updateAdminCategory
 } from "./api.js";
-import { PageHead, scoreKind } from "./components.jsx";
-import { Alert, Badge, Empty, Icon, Loading, copyQuizShareLink, formatDate, formatDay, navigate, useApp, useAsync, useToast } from "./ui.jsx";
+import { BackLink, PageHead, scoreKind } from "./components.jsx";
+import { Alert, Badge, Empty, Icon, Loading, copyQuizShareLink, formatDate, formatDay, navigate, subjectLabel, useApp, useAsync, useToast } from "./ui.jsx";
+
+/** Maps subject keys to display names for the signed-in user (built-in + their own custom subjects). */
+function useSubjectNames(token) {
+  const { data } = useAsync((signal) => fetchSubjects(token, signal).catch(() => ({ subjects: [] })), [token]);
+  return Object.fromEntries((data?.subjects || []).map((s) => [s.key, s.name]));
+}
 
 export function MyQuizzes() {
   const { token, user, startQuiz, startingQuizId } = useApp();
   const toast = useToast();
+  const subjectNames = useSubjectNames(token);
   const [showAll, setShowAll] = useState(user.role === "admin");
   const { data, loading, error, reload } = useAsync((signal) => fetchMyQuizzes(token, { all: showAll && user.role === "admin" }, signal), [token, showAll, user.role]);
   const quizzes = data?.quizzes || [];
@@ -36,6 +43,7 @@ export function MyQuizzes() {
 
   return (
     <div className="page">
+      <BackLink to="/">Dashboard</BackLink>
       <PageHead
         eyebrow="Authoring & Sharing"
         title={showAll && user.role === "admin" ? "All Published & Student Quizzes" : "My Quizzes"}
@@ -87,7 +95,7 @@ export function MyQuizzes() {
                       </div>
                     </td>
                     <td><Badge>{quiz.category?.name || "General"}</Badge></td>
-                    <td>{quiz.subjectKey ? `${quiz.subjectKey} · U${(quiz.unitIndex ?? 0) + 1}` : "—"}</td>
+                    <td>{quiz.subjectKey ? `${subjectLabel(quiz.subjectKey, subjectNames)} · Unit ${(quiz.unitIndex ?? 0) + 1}` : "—"}</td>
                     <td>{quiz.questionCount}</td>
                     <td><Badge kind={quiz.isPublished ? "ok" : "draft"}>{quiz.isPublished ? "Published" : "Draft"}</Badge></td>
                     {showAll && <td>{quiz.creatorName || "System"}</td>}
@@ -106,7 +114,7 @@ export function MyQuizzes() {
                         )}
                         <button className="btn btn-sm" onClick={() => navigate(`/edit/${quiz.id}`)}><Icon name="edit" size={14} /> Edit</button>
                         <button className="btn btn-sm" onClick={() => togglePublish(quiz)}>{quiz.isPublished ? "Unpublish" : "Publish"}</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => remove(quiz)}><Icon name="trash" size={14} /></button>
+                        <button className="btn btn-sm btn-danger" onClick={() => remove(quiz)} title="Delete this quiz permanently"><Icon name="trash" size={14} /> Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -127,6 +135,7 @@ export function History() {
 
   return (
     <div className="page">
+      <BackLink to="/">Dashboard</BackLink>
       <PageHead eyebrow="Progress" title="Attempt History" subtitle="Review your past scores and inspect question-by-question breakdowns." />
       <Alert kind="error">{error}</Alert>
       {loading ? <Loading /> : attempts.length === 0 ? (
@@ -176,6 +185,7 @@ export function History() {
 export function AdminConsole() {
   const { token, user, startQuiz, startingQuizId } = useApp();
   const toast = useToast();
+  const subjectNames = useSubjectNames(token);
   const [tab, setTab] = useState("quizzes");
   const [catName, setCatName] = useState("");
   const [catDesc, setCatDesc] = useState("");
@@ -242,6 +252,7 @@ export function AdminConsole() {
 
   return (
     <div className="page">
+      <BackLink to="/">Dashboard</BackLink>
       <PageHead eyebrow="Teacher & Admin Console" title="Platform Administration" subtitle="View all student- and teacher-generated quizzes, share test links, inspect student results, and manage roles.">
         <button className="btn btn-primary" onClick={() => navigate("/create")}><Icon name="plus" size={16} /> Create & share quiz</button>
       </PageHead>
@@ -282,7 +293,7 @@ export function AdminConsole() {
                           </div>
                         </td>
                         <td><strong>{q.creatorName || "System"}</strong></td>
-                        <td><Badge>{q.category?.name || "General"}</Badge>{q.subjectKey ? ` · ${q.subjectKey} U${(q.unitIndex ?? 0) + 1}` : ""}</td>
+                        <td><Badge>{q.category?.name || "General"}</Badge>{q.subjectKey ? ` · ${subjectLabel(q.subjectKey, subjectNames)} · Unit ${(q.unitIndex ?? 0) + 1}` : ""}</td>
                         <td>{q.questionCount}</td>
                         <td><Badge kind={q.isPublished ? "ok" : "draft"}>{q.isPublished ? "Published" : "Draft"}</Badge></td>
                         <td>
@@ -298,7 +309,7 @@ export function AdminConsole() {
                               </>
                             )}
                             <button className="btn btn-sm" onClick={() => navigate(`/edit/${q.id}`)}><Icon name="edit" size={14} /> Edit</button>
-                            <button className="btn btn-sm btn-danger" onClick={() => removeQuiz(q)}><Icon name="trash" size={14} /></button>
+                            <button className="btn btn-sm btn-danger" onClick={() => removeQuiz(q)} title="Delete this quiz permanently"><Icon name="trash" size={14} /> Delete</button>
                           </div>
                         </td>
                       </tr>
