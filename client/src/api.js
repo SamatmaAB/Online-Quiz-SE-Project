@@ -40,6 +40,9 @@ export const loginAccount = ({ email, password }) => request("/api/auth/login", 
 export const logoutAccount = (token) => request("/api/auth/logout", { method: "POST", token });
 export const requestPasswordReset = (email) => request("/api/auth/password-reset/request", { method: "POST", body: { email } });
 export const completePasswordReset = (token, password) => request("/api/auth/password-reset/complete", { method: "POST", body: { token, password } });
+export const fetchProfile = (token, signal) => request("/api/auth/me", { token, signal });
+export const updateProfile = (body, token) => request("/api/auth/profile", { method: "PATCH", body, token });
+export const changePassword = (body, token) => request("/api/auth/change-password", { method: "POST", body, token });
 
 // Catalogue
 export const fetchCategories = (signal) => request("/api/categories", { signal });
@@ -60,6 +63,7 @@ export const fetchUnitQuizzes = (subjectKey, unitIndex, token, signal) =>
 // AI
 export const fetchAiStatus = (token, signal) => request("/api/ai/status", { token, signal });
 export const generateQuestions = (payload, token) => request("/api/ai/generate-questions", { method: "POST", body: payload, token });
+export const chatWithChints = (payload, token) => request("/api/ai/chat", { method: "POST", body: payload, token });
 
 // Attempts
 export const startAttempt = (quizId, token) => request("/api/attempts", { method: "POST", body: { quizId }, token });
@@ -71,8 +75,10 @@ export const fetchAdminResults = (token, signal) => request("/api/attempts/admin
 
 // Subjects
 export const fetchSubjects = (token, signal) => request("/api/subjects", { token, signal });
+export const previewSyllabus = (syllabusText, token) => request("/api/subjects/preview", { method: "POST", body: { syllabusText }, token });
 export const createSubject = (form, token) => request("/api/subjects/custom", { method: "POST", body: form, token });
 export const deleteCustomSubject = (key, token) => request(`/api/subjects/custom/${encodeURIComponent(key)}`, { method: "DELETE", token });
+export const reparseSubject = (key, token) => request(`/api/subjects/custom/${encodeURIComponent(key)}/reparse`, { method: "POST", body: {}, token });
 export const updateSubjectState = (key, status, token) => request(`/api/subjects/${encodeURIComponent(key)}/state`, { method: "PATCH", body: { status }, token });
 export const unlockHiddenSubjects = (password, token) => request("/api/subjects/hidden/unlock", { method: "POST", body: { password }, token });
 export const restoreHiddenSubject = (key, token, hiddenToken) =>
