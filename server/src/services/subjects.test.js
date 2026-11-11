@@ -32,3 +32,8 @@ test("countSyllabusTopics sums topic counts across parsed syllabus units", () =>
   assert.equal(countSyllabusTopics([]), 0);
   assert.equal(countSyllabusTopics(null), 0);
 });
+
+import { looksUnsplit, splitTopicLine } from "./subjects.js";
+
+test("splitTopicLine splits long comma/dash separated syllabus paragraphs but keeps bracketed lists whole", () => {
+// Stage 1
