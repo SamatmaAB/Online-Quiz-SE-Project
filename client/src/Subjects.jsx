@@ -118,4 +118,124 @@ export function SubjectsList() {
           {shown.map((subject) => (
             <article key={subject.key} className="card subject-card" style={{ "--hue": hueFor(subject.key) }}>
               <div className="card-top subject-card-top">
-// Stage 1
+                <div className="subject-card-head">
+                  <span className="subject-icon">{subjectBadge(subject)}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <span className="code">{(subject.code || (subject.isCustom ? "CUSTOM" : "COURSE")).toUpperCase()} · {subject.courseType || "Core"}</span>
+                    <h3>{subject.name}</h3>
+                  </div>
+                </div>
+                <Badge kind={subject.status}>{subject.status}</Badge>
+              </div>
+              <p className="text-muted">{subject.description || `${subject.units?.length || 0} structured syllabus units ready for study and practice quizzes.`}</p>
+              <div className="meta">
+                <span><Icon name="layers" size={16} /> {subject.units?.length || 0} units</span>
+                <span><Icon name="list" size={16} /> {(subject.units || []).reduce((n, u) => n + (u.topics?.length || 0), 0)} topics</span>
+                {subject.isCustom && <Badge>Personal</Badge>}
+              </div>
+              <div className="card-foot">
+                {subject.status === "enrolled" ? (
+                  <>
+                    <button className="btn btn-primary" onClick={() => navigate(`/subjects/${encodeURIComponent(subject.key)}`)}>Open units <Icon name="arrowRight" size={16} /></button>
+                    <div className="row" style={{ gap: 6 }}>
+                      <button className="btn btn-sm" disabled={busyKey === subject.key} onClick={() => setState(subject, "dropped")}>Drop</button>
+                      {subject.isCustom && <button className="btn btn-sm btn-danger" disabled={busyKey === subject.key} onClick={() => removeCustom(subject)}><Icon name="trash" size={15} /></button>}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button className="btn btn-primary" disabled={busyKey === subject.key} onClick={() => setState(subject, "enrolled")}>
+                      <Icon name="plus" size={16} /> {busyKey === subject.key ? "Enrolling…" : "Enroll now"}
+                    </button>
+                    {subject.isCustom && <button className="btn btn-sm btn-danger" disabled={busyKey === subject.key} onClick={() => removeCustom(subject)}><Icon name="trash" size={15} /></button>}
+                  </>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {showAdd && (
+        <Modal title="Add a custom subject" onClose={() => setShowAdd(false)} wide>
+          <Alert kind="error">{formError}</Alert>
+          <form onSubmit={handleAdd} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="form-grid">
+              <label className="field">Subject name *<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Operating Systems" minLength={2} maxLength={100} required /></label>
+              <label className="field">Course code<input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. UE24CS353A" maxLength={40} /></label>
+              <label className="field">Course type<input value={form.courseType} onChange={(e) => setForm({ ...form, courseType: e.target.value })} placeholder="CC / EC / Lab" maxLength={40} /></label>
+            </div>
+            <label className="field">
+              Syllabus text *
+              <textarea rows={8} value={form.syllabusText} onChange={(e) => { setForm({ ...form, syllabusText: e.target.value }); setPreviewUnits(null); }} required minLength={10} maxLength={20000}
+                placeholder={"Unit - 1: Processes & Threads\nProcess concept, CPU scheduling algorithms, Threads and concurrency\n\nUnit - 2: Synchronization & Deadlocks\nCritical section problem, Semaphores and mutexes, Deadlock prevention"} />
+              <small>Paste any college syllabus (e.g. “Unit - 1”, “Unit 1: …”, “Module 1”, bullet points, or comma/period-separated paragraphs). Chints automatically separates every unit and its topics.</small>
+            </label>
+            {previewUnits && (
+              <div className="card card-pad" style={{ background: "var(--surface-2)", display: "flex", flexDirection: "column", gap: 12, maxHeight: 240, overflow: "auto" }}>
+                <div className="row" style={{ justifyContent: "space-between" }}>
+                  <strong style={{ fontSize: 13.5 }}><Icon name="sparkle" size={14} /> Chints sorted {previewUnits.length} {previewUnits.length === 1 ? "unit" : "units"} · {previewUnits.reduce((n, u) => n + (u.topics?.length || 0), 0)} topics</strong>
+                  <Badge kind="ok">Ready</Badge>
+                </div>
+                {previewUnits.map((u, idx) => (
+                  <div key={idx} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <b style={{ fontSize: 13 }}>{u.name} ({u.topics?.length || 0} {u.topics?.length === 1 ? "topic" : "topics"})</b>
+                    <div className="topic-tags">
+                      {(u.topics || []).map((t, i) => <span key={i} className="tag">{t.name}</span>)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn" onClick={() => { setShowAdd(false); setPreviewUnits(null); }}>Cancel</button>
+              <button type="button" className="btn" disabled={previewBusy || busyKey === "add"} onClick={handlePreview}>
+                <Icon name="sparkle" size={15} /> {previewBusy ? "Sorting with Chints…" : "Preview units & topics"}
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={busyKey === "add"}>
+                <Icon name="check" size={15} /> {busyKey === "add" ? "Sorting with Chints & saving…" : "Create & enroll with Chints"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+export function SubjectDetail({ subjectKey, unitIndex }) {
+  const { token } = useApp();
+  const toast = useToast();
+  const { data, loading, error, reload } = useAsync((signal) => fetchSubjects(token, signal), [token, subjectKey]);
+  const subject = (data?.subjects || []).find((s) => s.key === subjectKey);
+  const [reparsing, setReparsing] = useState(false);
+
+  async function reparse() {
+    setReparsing(true);
+    try {
+      await reparseSubject(subjectKey, token);
+      toast("Syllabus re-read — topics updated");
+      reload();
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setReparsing(false);
+    }
+  }
+
+  async function enrollNow() {
+    try {
+      await updateSubjectState(subjectKey, "enrolled", token);
+      toast(`Enrolled in ${subject.name}`);
+      reload();
+    } catch (err) {
+      toast(err.message, "error");
+    }
+  }
+
+  if (loading) return <div className="page"><Loading /></div>;
+  if (error) return <div className="page"><Alert kind="error">{error}</Alert></div>;
+  if (!subject) return <div className="page"><Empty icon="book" title="Subject not found" action={<button className="btn" onClick={() => navigate("/subjects")}>Back to subjects</button>} /></div>;
+
+  if (subject.status !== "enrolled") {
+// Stage 2
