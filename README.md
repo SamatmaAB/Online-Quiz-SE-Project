@@ -92,3 +92,9 @@ Run API helper tests with `npm --prefix server test` and build the client with `
 
 - `POST /api/ai/generate-questions` generates multiple-choice questions for a given `subjectKey`, `unitIndex`, `topicFocus`, `difficulty`, and `count`.
 - Uses Google Gemini (`gemini-3.8-flash`) when `GEMINI_API_KEY` is configured in `server/.env`, and automatically falls back to the deterministic syllabus-aware Chints engine when offline.
+
+### Student vs. Teacher (Admin) Roles & Account-Scoped Privacy
+
+- During registration (`POST /api/auth/register`), users can select **Student** (`role: "user"`) or **Teacher** (`role: "admin"`).
+- Student-generated quizzes remain private to the creator's own account in catalog and unit listings.
+- Teachers (`role: "admin"`) have full global visibility across all student-created and teacher-created quizzes.
