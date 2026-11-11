@@ -230,4 +230,236 @@ export default function ChintsCat({
   // Sequence 3: Wake up from sleeping loaf -> stretch -> sit
   const runWakeSequence = useCallback(() => {
     clearTimers();
-// Stage 1
+    if (poseRef.current === "sitting") return;
+    updatePose("wake-stretch");
+    schedule(() => updatePose("sitting"), 650);
+  }, [clearTimers, schedule, updatePose]);
+
+  // Handle parent `woolTrigger` button clicks
+  useEffect(() => {
+    if (woolTrigger !== prevWoolTriggerRef.current) {
+      prevWoolTriggerRef.current = woolTrigger;
+      if (woolTrigger > 0) runWoolSequence();
+    }
+  }, [woolTrigger, runWoolSequence]);
+
+  // Handle parent `napRequest` toggle clicks
+  useEffect(() => {
+    if (napRequest !== prevNapRequestRef.current) {
+      prevNapRequestRef.current = napRequest;
+      if (napRequest) {
+        runSleepSequence();
+      } else if (["sleeping", "settle-loaf", "spin-360", "stand-up", "slip-off"].includes(poseRef.current)) {
+        runWakeSequence();
+      }
+    }
+  }, [napRequest, runSleepSequence, runWakeSequence]);
+
+  // Clean up timers on unmount
+  useEffect(() => clearTimers, [clearTimers]);
+
+  // Periodic automatic wool play every ~32 seconds when sitting idle
+  useEffect(() => {
+    if (!interactive) return undefined;
+    const id = window.setInterval(() => {
+      if (poseRef.current === "sitting" && !napRequest) {
+        runWoolSequence();
+      }
+    }, 32000);
+    return () => window.clearInterval(id);
+  }, [interactive, napRequest, runWoolSequence]);
+
+  // Track mouse cursor position for eye tracking, proximity detection, and 5-minute sleep timer
+  useEffect(() => {
+    if (!interactive) return undefined;
+
+    const onMouseMove = (event) => {
+      lastActivityRef.current = Date.now();
+      // If the cat fell asleep from 5-min idle (not manual nap button), waking up uses the wake stretch!
+      if (!napRequest && poseRef.current === "sleeping") {
+        runWakeSequence();
+      }
+
+      const el = wrapRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = event.clientX - cx;
+      const dy = event.clientY - cy;
+      const dist = Math.hypot(dx, dy);
+
+      const angle = Math.atan2(dy, dx);
+      const maxShift = Math.min(4.5, dist / 28);
+      setEyeOffset({
+        x: Number((Math.cos(angle) * maxShift).toFixed(2)),
+        y: Number((Math.sin(angle) * maxShift).toFixed(2))
+      });
+
+      setNearCursor(dist < 125);
+    };
+
+    const onAnyActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("keydown", onAnyActivity, { passive: true });
+    window.addEventListener("mousedown", onAnyActivity, { passive: true });
+
+    const sleepChecker = window.setInterval(() => {
+      if (Date.now() - lastActivityRef.current >= SLEEP_TIMEOUT_MS && poseRef.current === "sitting") {
+        runSleepSequence();
+      }
+    }, 5000);
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("keydown", onAnyActivity);
+      window.removeEventListener("mousedown", onAnyActivity);
+      window.clearInterval(sleepChecker);
+    };
+  }, [interactive, napRequest, runSleepSequence, runWakeSequence]);
+
+  // Natural occasional blink when sitting
+  useEffect(() => {
+    if (pose !== "sitting") return undefined;
+    const id = window.setInterval(() => {
+      setBlinking(true);
+      window.setTimeout(() => setBlinking(false), 160);
+    }, 4200);
+    return () => window.clearInterval(id);
+  }, [pose]);
+
+  const isLoafPose = ["sleeping", "settle-loaf", "wool-bonk", "wool-notice"].includes(pose);
+  const isBellyPose = ["wool-biting", "wool-rollaway", "slip-off"].includes(pose);
+  const isStandingPose = ["stand-up", "spin-360", "wake-stretch"].includes(pose);
+
+  // While biting the wool ball, eyes stay happily closed UNLESS the cursor comes near Chints!
+  const eyesClosedInWool = pose === "wool-biting" && !nearCursor;
+
+  const stateClass = [
+    "chints-cat-wrap",
+    `pose-${pose}`,
+    nearCursor && pose === "sitting" ? "cat-play-cursor" : "",
+    className
+  ].filter(Boolean).join(" ");
+
+  return (
+    <div
+      ref={wrapRef}
+      className={stateClass}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(e); } : undefined}
+      style={{ width: size, height: size }}
+      title="Chints the Cat — Move cursor close or click to interact!"
+    >
+      {/* Floating Zzz only when fully asleep */}
+      {pose === "sleeping" && (
+        <div className="cat-zzz" aria-hidden="true">
+          <span>z</span><span>Z</span><span>Z</span>
+        </div>
+      )}
+
+      {/* Startled '!' when the wool ball bonks the sleeping cat on the head! */}
+      {(pose === "wool-bonk" || pose === "wool-notice") && (
+        <div className="cat-bonk-pop" aria-hidden="true">!</div>
+      )}
+
+      {/* Playful paw indicator when swatting at cursor in sitting mode */}
+      {nearCursor && pose === "sitting" && (
+        <div className="cat-cursor-pop" aria-hidden="true">🐾</div>
+      )}
+
+      <svg
+        viewBox="0 0 130 120"
+        width={size}
+        height={size}
+        className="chints-cat-svg"
+        aria-label={`Chints the ${palette.name} cat`}
+      >
+        {/* ───────── GROUP A: LOAF POSES (Sleeping, Settling, Wool-Bonk on Head, Waking Notice) ───────── */}
+        {isLoafPose && (
+          <g className={`cat-loaf-group ${pose}`}>
+            <ellipse cx="66" cy="105" rx="48" ry="7" fill="rgba(0,0,0,0.28)" />
+
+            {/* Curled tail tucked around the back of the loaf */}
+            <path
+              d="M 104 92 Q 122 86 114 74 Q 108 68 98 76"
+              fill="none"
+              stroke={palette.coatDark}
+              strokeWidth="8"
+              strokeLinecap="round"
+            />
+
+            {/* Main Loaf Body */}
+            <path
+              d="M 24 96 C 22 68, 52 60, 82 62 C 106 64, 114 78, 110 96 C 108 103, 26 103, 24 96 Z"
+              fill={palette.coat}
+              stroke={palette.coatDark}
+              strokeWidth="1.5"
+            />
+
+            {breed === "calico" && (
+              <>
+                <circle cx="76" cy="76" r="10" fill={palette.coatDark} />
+                <circle cx="94" cy="84" r="8" fill={palette.stripes} />
+              </>
+            )}
+            {(breed === "ginger" || breed === "cyber") && (
+              <g stroke={palette.stripes} strokeWidth="3" strokeLinecap="round" opacity="0.65">
+                <path d="M 72 63 Q 74 75 70 84" fill="none" />
+                <path d="M 84 64 Q 86 76 82 85" fill="none" />
+                <path d="M 95 67 Q 97 77 93 86" fill="none" />
+              </g>
+            )}
+
+            {/* Tucked front loaf chest */}
+            <ellipse cx="44" cy="94" rx="16" ry="9" fill={palette.belly} />
+
+            {/* Resting Loaf Head */}
+            <g className={pose === "wool-bonk" ? "cat-head-bonked" : pose === "wool-notice" ? "cat-head-alert" : "cat-loaf-head"}>
+              <polygon points="22,68 12,48 34,56" fill={palette.coatDark} stroke={palette.coat} strokeWidth="1.5" strokeLinejoin="round" />
+              <polygon points="23,65 16,52 31,57" fill={palette.earInner} />
+              <polygon points="62,66 70,46 50,55" fill={palette.coatDark} stroke={palette.coat} strokeWidth="1.5" strokeLinejoin="round" />
+              <polygon points="60,63 66,50 52,56" fill={palette.earInner} />
+
+              <ellipse cx="42" cy="76" rx="25" ry="19" fill={palette.coat} />
+              {breed === "siamese" && (
+                <ellipse cx="42" cy="79" rx="16" ry="12" fill={palette.coatDark} opacity="0.88" />
+              )}
+
+              <ellipse cx="24" cy="82" rx="4.5" ry="2.6" fill="#fb7185" opacity="0.55" />
+              <ellipse cx="60" cy="82" rx="4.5" ry="2.6" fill="#fb7185" opacity="0.55" />
+
+              {/* Eyes: Closed when sleeping/settling, wide open looking at the wool ball when bonked/noticing! */}
+              {pose === "wool-notice" ? (
+                <g>
+                  <circle cx="32" cy="74" r="6.5" fill="#ffffff" />
+                  <circle cx="52" cy="74" r="6.5" fill="#ffffff" />
+                  <circle cx="29.5" cy="75" r="4.6" fill={palette.eye} />
+                  <circle cx="49.5" cy="75" r="4.6" fill={palette.eye} />
+                  <circle cx="29.5" cy="75" r="2.6" fill="#0f172a" />
+                  <circle cx="49.5" cy="75" r="2.6" fill="#0f172a" />
+                  <circle cx="28" cy="73.5" r="1.3" fill="#ffffff" />
+                  <circle cx="48" cy="73.5" r="1.3" fill="#ffffff" />
+                </g>
+              ) : (
+                <g stroke={palette.closedEye} strokeWidth="2.8" fill="none" strokeLinecap="round">
+                  <path d="M 26 74 Q 32 80 38 74" />
+                  <line x1="28" y1="77" x2="26" y2="80" strokeWidth="2" />
+                  <line x1="32" y1="78" x2="32" y2="81" strokeWidth="2" />
+                  <path d="M 46 74 Q 52 80 58 74" />
+                  <line x1="52" y1="78" x2="52" y2="81" strokeWidth="2" />
+                  <line x1="56" y1="77" x2="58" y2="80" strokeWidth="2" />
+                </g>
+              )}
+
+              <polygon points="39,81 45,81 42,84" fill={palette.nose} />
+              <path
+                d="M 37 86 Q 40 88 42 86 Q 44 88 47 86"
+                fill="none"
+                stroke={palette.closedEye}
+// Stage 2
