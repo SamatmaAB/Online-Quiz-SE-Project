@@ -115,4 +115,122 @@ function splitEmbeddedHeadings(segment) {
  * paragraph per unit ("A, B (c, d), E – F. G: H"), so long lines are split on top-level commas, semicolons,
  * sentence periods, bullets, spaced dashes, and embedded section headers. Separators inside brackets are kept.
  */
-// Stage 1
+export function splitTopicLine(line) {
+  const text = String(line || "").replace(/\s+/g, " ").trim();
+  if (!text || standaloneUnitMarker.test(text)) return [];
+  const rawPieces = [];
+  let depth = 0;
+  let buffer = "";
+  const flush = () => {
+    for (const part of splitEmbeddedHeadings(buffer)) {
+      if (part.length >= 2 && !standaloneUnitMarker.test(part)) rawPieces.push(part);
+    }
+    buffer = "";
+  };
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if ("([{".includes(ch)) depth += 1;
+    else if (")]}".includes(ch)) depth = Math.max(0, depth - 1);
+    if (depth === 0) {
+      const prev = text[i - 1] || "";
+      const next = text[i + 1] || "";
+      const betweenDigits = /\d/.test(prev) && /\d/.test(next);
+      const sentenceDot =
+        ch === "." &&
+        next === " " &&
+        /[A-Z]/.test(text[i + 2] || "") &&
+        !/\b(?:e\.g|i\.e|vs|etc|dr|mr|mrs|fig|no|st|ch)$/i.test(buffer.trim());
+
+      if (
+        ch === ";" ||
+        ch === "•" ||
+        ch === "|" ||
+        ch === "–" ||
+        ch === "—" ||
+        sentenceDot ||
+        (ch === "," && !betweenDigits) ||
+        (ch === "-" && prev === " " && next === " ")
+      ) {
+        flush();
+        continue;
+      }
+    }
+    buffer += ch;
+  }
+  flush();
+
+  // Short lines are only split when they clearly are lists (3+ items); "Process concept, states" stays whole.
+  if (text.length <= LONG_LINE && rawPieces.length < 3 && !/[;•|]/.test(text)) {
+    const single = cleanTopic(text);
+    return single && !standaloneUnitMarker.test(single) ? [single] : [];
+  }
+
+  // Post-process fragments for context clarity (e.g. "Single and Double" after "Circular Linked List").
+  const refined = [];
+  for (let i = 0; i < rawPieces.length; i += 1) {
+    let item = rawPieces[i];
+    const prev = refined[refined.length - 1] || "";
+    if (/^single\s+and\s+double$/i.test(item) && /linked\s+list/i.test(prev)) {
+      item = "Single and Double Ended Linked Lists";
+    } else if (/^case\s+study$/i.test(item) && rawPieces[i + 1]) {
+      item = `Case Study: ${rawPieces[i + 1]}`;
+      i += 1;
+    } else if (/: case study$/i.test(item) && rawPieces[i + 1] && rawPieces[i + 1].length < 40) {
+      item = `${item} (${rawPieces[i + 1]})`;
+      i += 1;
+    }
+    refined.push(item);
+  }
+  return refined;
+}
+
+function extractTopicNames(lines) {
+  const seen = new Set();
+  const names = [];
+  for (const line of lines) {
+    for (const topic of splitTopicLine(line)) {
+      const key = topic.toLowerCase();
+      if (seen.has(key) || standaloneUnitMarker.test(topic)) continue;
+      seen.add(key);
+      names.push(topic);
+    }
+  }
+  return names;
+}
+
+/**
+ * Generates a concise, helpful 1-sentence study description for a syllabus topic so custom
+ * subjects have meaningful descriptions and Chints can craft specific MCQs even offline.
+ */
+export function describeTopic(topicName, unitName = "") {
+  const name = String(topicName || "").trim();
+  const lower = name.toLowerCase();
+  const unitClean = String(unitName || "").replace(/^Unit\s*\d+\s*:\s*/i, "").trim();
+
+  if (name.includes(":")) {
+    const [head, ...restParts] = name.split(":");
+    const tail = restParts.join(":").trim();
+    if (head && tail) {
+      return `Covers ${tail} within ${head.trim()}, including its structure, operations, and practical implementation.`;
+    }
+  }
+  if (/linked list/i.test(lower)) {
+    return `Dynamic node-based linear data structure (${name}) covering pointer manipulation, insertion, deletion, and traversal complexity.`;
+  }
+  if (/stack/i.test(lower)) {
+    return `LIFO (Last-In, First-Out) data structure concept (${name}) used for managing function calls, expressions, and backtracking.`;
+  }
+  if (/queue|dequeue/i.test(lower)) {
+    return `FIFO / double-ended queue structure (${name}) for ordered scheduling, buffering, and cyclic or priority-based processing.`;
+  }
+  if (/infix|postfix|prefix|expression|parenthes/i.test(lower)) {
+    return `Algorithmic technique for parsing, converting, and evaluating ${name} using operator precedence and stack frames.`;
+  }
+  if (/recursion|hanoi|josephus/i.test(lower)) {
+    return `Problem-solving method using self-referential base and recursive cases to solve ${name} and analyze call-stack behavior.`;
+  }
+  if (/memory allocation|pointer|review of c/i.test(lower)) {
+    return `Foundational systems programming concept (${name}) governing stack vs. heap layout, pointers, and runtime memory management.`;
+  }
+// Stage 2
