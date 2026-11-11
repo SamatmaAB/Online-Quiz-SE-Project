@@ -223,4 +223,230 @@ export default function ChintsChat({ tucked, onToggleTuck }) {
           sender: "chints",
           time: new Date().toISOString(),
           text: `Purr-fect score!! 🐾🎉 You scored **${scoreText}** on **${quizTitle}**! Would you like me to explain any question and why the right answer works?`,
-// Stage 1
+          suggestions: ["Explain Q1", "Generate another quiz", "Back to subjects"]
+        };
+
+    appendMessagesToActive([promptMsg], `Review: ${quizTitle}`);
+    if (tucked) onToggleTuck?.(false);
+  }, [isReviewMode, activeAttempt, appendMessagesToActive, tucked, onToggleTuck]);
+
+  const sendMessage = useCallback(async (rawText) => {
+    const text = String(rawText ?? input).trim();
+    if (!text || busy) return;
+    setInput("");
+    setShowHistory(false);
+    setManualNap(false);
+
+    const userMsg = { id: `u-${Date.now()}`, sender: "user", time: new Date().toISOString(), text };
+    appendMessagesToActive([userMsg]);
+    setBusy(true);
+
+    try {
+      const attemptPayload = activeAttempt
+        ? {
+            id: activeAttempt.id,
+            status: activeAttempt.status,
+            quizTitle: activeAttempt.quiz?.title,
+            score: activeAttempt.score,
+            totalQuestions: activeAttempt.totalQuestions,
+            questions: (activeAttempt.questions || []).map((q) => ({
+              prompt: q.prompt,
+              options: q.options,
+              selectedOption: q.selectedOption,
+              correctOption: q.correctOption,
+              isCorrect: q.isCorrect
+            }))
+          }
+        : null;
+
+      const mode = isExamMode ? "exam" : isReviewMode ? "review" : "general";
+      const res = await chatWithChints({ message: text, mode, attemptContext: attemptPayload }, token);
+
+      if (res.action?.type === "navigate" && res.action.path) {
+        navigate(res.action.path);
+      }
+
+      const defaultSuggestions = isExamMode
+        ? ["24 * 15 / 4", "18% of 250", "sqrt(144) + 2^8"]
+        : res.action?.path?.startsWith("/subjects")
+          ? ["Generate a quiz with Chints", "How do I delete a quiz?"]
+          : isReviewMode
+            ? ["Yes, explain where I went wrong!", "Explain Q1", "Generate a quiz with Chints"]
+            : ["How do I add subjects?", "Generate a quiz with Chints", "Open my profile"];
+
+      appendMessagesToActive([
+        {
+          id: `c-${Date.now()}`,
+          sender: "chints",
+          time: new Date().toISOString(),
+          text: res.reply || "Meow! 🐾 I'm right here bro! Tell me what you need help with!",
+          actionLabel: res.action?.label || "",
+          suggestions: defaultSuggestions
+        }
+      ]);
+    } catch (err) {
+      appendMessagesToActive([
+        {
+          id: `e-${Date.now()}`,
+          sender: "chints",
+          time: new Date().toISOString(),
+          text: `Oops, hit a quick snag (${err.message}). Try asking me again!`
+        }
+      ]);
+    } finally {
+      setBusy(false);
+    }
+  }, [input, busy, activeAttempt, isExamMode, isReviewMode, token, appendMessagesToActive]);
+
+  // Allow other components (like Player.jsx "Ask Chints why I was wrong") to trigger a Chints message
+  useEffect(() => {
+    if (!chintsTrigger) return;
+    if (tucked) onToggleTuck?.(false);
+    sendMessage(chintsTrigger);
+    clearChintsTrigger?.();
+  }, [chintsTrigger, clearChintsTrigger, sendMessage, tucked, onToggleTuck]);
+
+  const startNewChat = () => {
+    const fresh = createNewThread("New conversation");
+    setThreads((curr) => [fresh, ...curr]);
+    setActiveThreadId(fresh.id);
+    setShowHistory(false);
+    toast("Started a new chat with Chints 🐾");
+  };
+
+  const deleteThread = (id) => {
+    const remaining = threads.filter((t) => t.id !== id);
+    if (remaining.length === 0) {
+      const fresh = createNewThread("New conversation");
+      setThreads([fresh]);
+      setActiveThreadId(fresh.id);
+    } else {
+      setThreads(remaining);
+      if (id === activeThread.id) {
+        setActiveThreadId(remaining[0].id);
+      }
+    }
+    toast("Chat deleted from history");
+  };
+
+  const clearAllHistory = () => {
+    const fresh = createNewThread("New conversation");
+    setThreads([fresh]);
+    setActiveThreadId(fresh.id);
+    setShowHistory(false);
+    toast("All previous chats deleted");
+  };
+
+  const clearCurrentChat = () => {
+    setThreads((curr) =>
+      curr.map((t) =>
+        t.id === activeThread.id
+          ? { ...t, title: "New conversation", updatedAt: new Date().toISOString(), messages: [createWelcomeMessage()] }
+          : t
+      )
+    );
+    toast("Current chat cleared");
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    sendMessage(input);
+  };
+
+  const contextLabel = pageContextLabel(route.segments, isExamMode, isReviewMode, activeAttempt);
+
+  return (
+    <>
+      {/* When tucked in, Chints the Virtual Cat sits in the bottom-right corner watching your cursor! */}
+      {tucked && (
+        <div className="chints-cat-corner">
+          <ChintsCat
+            breed={catBreed}
+            size={92}
+            woolTrigger={woolTrigger}
+            napRequest={manualNap}
+            onStatusText={setCatStatusText}
+            onClick={() => onToggleTuck?.(false)}
+            badgeText={isExamMode ? "🧮 Calc" : isReviewMode ? "📝 Review" : "Chints 🐾"}
+          />
+        </div>
+      )}
+
+      <aside className={tucked ? "chints-panel tucked" : "chints-panel"} aria-label="Chints AI Assistant">
+        {/* Left drag handle to extend/resize the panel width */}
+        <div
+          className="chints-resize-handle"
+          onMouseDown={startResize}
+          title="Drag left or right to resize Chints panel"
+        />
+
+        {/* Top Header */}
+        <div className="chints-panel-head">
+          <div className="row" style={{ gap: 8, minWidth: 0 }}>
+            <strong style={{ fontSize: 15 }}>🐾 Chints AI</strong>
+            <span className="tag" style={{ fontSize: 11, padding: "2px 8px" }}>{currentCat.name}</span>
+          </div>
+
+          <div className="row" style={{ gap: 4 }}>
+            <button
+              type="button"
+              className="icon-button chints-head-btn"
+              onClick={startNewChat}
+              title="Start new chat"
+              aria-label="Start new chat"
+            >
+              <Icon name="plus" size={15} />
+            </button>
+            <button
+              type="button"
+              className={showHistory ? "icon-button chints-head-btn active" : "icon-button chints-head-btn"}
+              onClick={() => { setShowHistory((v) => !v); setShowInfo(false); }}
+              title="Chat history (view or delete old chats)"
+              aria-label="Chat history"
+            >
+              <Icon name="history" size={15} />
+            </button>
+            <button
+              type="button"
+              className="icon-button chints-head-btn"
+              onClick={clearCurrentChat}
+              title="Clear current chat messages"
+              aria-label="Clear current chat"
+            >
+              <Icon name="trash" size={14} />
+            </button>
+            <button
+              type="button"
+              className={showInfo ? "icon-button chints-head-btn active" : "icon-button chints-head-btn"}
+              onClick={() => { setShowInfo((v) => !v); setShowHistory(false); }}
+              title="Shortcuts & cat settings"
+              aria-label="Shortcuts"
+            >
+              <Icon name="info" size={15} />
+            </button>
+            <button
+              type="button"
+              className="icon-button chints-head-btn"
+              onClick={toggleWide}
+              title={panelWidth > 430 ? "Standard width" : "Extend panel wider"}
+              aria-label="Toggle panel width"
+            >
+              <Icon name="layers" size={15} />
+            </button>
+            <button
+              type="button"
+              className="icon-button chints-head-btn"
+              onClick={() => onToggleTuck?.(true)}
+              title="Tuck panel in (show Chints cat in corner)"
+              aria-label="Tuck Chints panel in"
+            >
+              <Icon name="arrowRight" size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Interactive Virtual Cat Stage inside the panel */}
+        <div className="chints-cat-stage">
+          <ChintsCat
+            breed={catBreed}
+// Stage 2
