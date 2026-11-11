@@ -55,4 +55,71 @@ router.post("/logout", async (req, res) => {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
     return res.status(500).json({ message: "Authentication is not configured" });
   }
-// Stage 1
+  try {
+    const token = match[1];
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    await RevokedToken.updateOne(
+      { tokenHash },
+      { $setOnInsert: { tokenHash, expiresAt: new Date(payload.exp * 1000) } },
+      { upsert: true }
+    );
+    return res.json({ message: "Logged out successfully" });
+  } catch {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+});
+
+router.get("/me", requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "Account not found" });
+    return res.json({ user: publicUser(user) });
+  } catch (error) { next(error); }
+});
+
+router.patch("/profile", requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("+tokenVersion");
+    if (!user) return res.status(404).json({ message: "Account not found" });
+    if (req.body?.name !== undefined) {
+      const name = String(req.body.name || "").trim();
+      if (name.length < 2 || name.length > 80) return res.status(400).json({ message: "Name must be 2–80 characters" });
+      user.name = name;
+    }
+    if (req.body?.email !== undefined) {
+      const email = String(req.body.email || "").trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: "Enter a valid email address" });
+      if (email !== user.email && (await User.exists({ email }))) {
+        return res.status(409).json({ message: "An account with this email already exists" });
+      }
+      user.email = email;
+    }
+    if (req.body?.role !== undefined) {
+      const rawRole = String(req.body.role || "").trim().toLowerCase();
+      user.role = rawRole === "teacher" || rawRole === "admin" ? "admin" : "user";
+    }
+    await user.save();
+    return res.json({ user: publicUser(user), token: issueToken(user) });
+  } catch (error) { next(error); }
+});
+
+router.post("/change-password", requireAuth, async (req, res, next) => {
+  try {
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+    if (newPassword.length < 8 || newPassword.length > 72) {
+      return res.status(400).json({ message: "New password must be 8–72 characters" });
+    }
+    const user = await User.findById(req.user.id).select("+passwordHash +tokenVersion");
+    if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+    return res.json({ message: "Password updated successfully", token: issueToken(user), user: publicUser(user) });
+  } catch (error) { next(error); }
+});
+
+export default router;
