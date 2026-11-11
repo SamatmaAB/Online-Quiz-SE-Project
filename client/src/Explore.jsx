@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchCategories, fetchQuizzes } from "./api.js";
-import { PageHead, QuizCard } from "./components.jsx";
+import { BackLink, PageHead, QuizCard } from "./components.jsx";
 import { Alert, Empty, Icon, Loading, navigate, useApp, useAsync, useRoute } from "./ui.jsx";
 
 const PAGE_SIZE = 12;
@@ -26,6 +26,7 @@ export default function Explore() {
 
   return (
     <div className="page">
+      <BackLink to="/">Dashboard</BackLink>
       <PageHead eyebrow="Library" title="Explore quizzes" subtitle={search ? `Results for “${search}”` : user?.role === "admin" ? "Teacher view — showing all published quizzes across all student and teacher accounts." : "Showing built-in quizzes and quizzes created in your account."}>
         <button className="btn btn-primary" onClick={() => navigate("/create")}><Icon name="plus" size={16} /> Create quiz</button>
       </PageHead>
@@ -56,8 +57,8 @@ export default function Explore() {
         <Empty icon="search" title="No quizzes found" action={<button className="btn" onClick={clear}>Clear filters</button>}>Try a different search or topic — or create one yourself.</Empty>
       ) : (
         <>
-          <p className="text-muted">{pagination?.total ?? 0} quizzes</p>
-          <div className="grid-auto">{quizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} />)}</div>
+          <p className="text-muted">{pagination?.total ?? 0} {pagination?.total === 1 ? "quiz" : "quizzes"}</p>
+          <div className="grid-auto">{quizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} onDeleted={catalog.reload} />)}</div>
           {pagination?.pages > 1 && (
             <div className="row" style={{ justifyContent: "center" }}>
               <button className="btn" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><Icon name="arrowLeft" size={16} /> Previous</button>
