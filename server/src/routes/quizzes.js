@@ -151,6 +151,7 @@ router.get("/", optionalAuth, async (req, res, next) => {
     res.json({
       quizzes: quizzes.filter((quiz) => quiz.category).map((quiz) => ({
         ...quizSummary(quiz),
+        isMine: Boolean(req.user && String(quiz.createdBy?._id ?? quiz.createdBy ?? "") === req.user.id),
         ...(req.user?.role === "admin" ? { creatorName: quiz.createdBy?.name ?? "System" } : {})
       })),
       pagination: { page: paging.page, limit: paging.limit, total, pages: Math.ceil(total / paging.limit) }
