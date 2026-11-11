@@ -462,4 +462,281 @@ export default function ChintsCat({
                 d="M 37 86 Q 40 88 42 86 Q 44 88 47 86"
                 fill="none"
                 stroke={palette.closedEye}
-// Stage 2
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </g>
+
+            {/* Incoming Wool Ball rolling in and bonking the sleeping cat on the head! */}
+            {(pose === "wool-bonk" || pose === "wool-notice") && (
+              <g className={pose === "wool-bonk" ? "wool-bonk-anim" : "wool-bonk-settled"}>
+                <circle cx="38" cy="54" r="11" fill={palette.yarn} stroke="#ffffff" strokeWidth="1.2" />
+                <path d="M 30 50 Q 38 45 46 52" stroke="#ffffff" strokeWidth="1.7" fill="none" opacity="0.85" />
+                <path d="M 29 56 Q 38 52 47 58" stroke="#ffffff" strokeWidth="1.7" fill="none" opacity="0.85" />
+                <path d="M 34 45 Q 41 54 35 63" stroke="#ffffff" strokeWidth="1.7" fill="none" opacity="0.85" />
+              </g>
+            )}
+          </g>
+        )}
+
+        {/* ───────── GROUP B: BELLY-UP WOOL BITING & SLIP-OFF POSES ───────── */}
+        {isBellyPose && (
+          <g className="cat-belly-wool-pose">
+            <ellipse cx="66" cy="106" rx="46" ry="7" fill="rgba(0,0,0,0.24)" />
+
+            <path
+              className="cat-tail"
+              d="M 98 92 Q 122 80 116 58"
+              fill="none"
+              stroke={palette.coatDark}
+              strokeWidth="8"
+              strokeLinecap="round"
+            />
+
+            {/* Cat lying on its back/side horizontally */}
+            <ellipse cx="68" cy="88" rx="34" ry="18" fill={palette.coat} />
+            <ellipse cx="68" cy="82" rx="23" ry="12" fill={palette.belly} />
+
+            {/* Back Paws kicking */}
+            <g className={pose === "wool-biting" ? "cat-kick-paws" : ""}>
+              <ellipse cx="94" cy="76" rx="7" ry="5" fill={palette.belly} stroke={palette.coatDark} strokeWidth="1.5" />
+              <ellipse cx="98" cy="86" rx="7" ry="5" fill={palette.belly} stroke={palette.coatDark} strokeWidth="1.5" />
+            </g>
+
+            {/* Wool Ball on top of belly (or slipping/rolling off in wool-rollaway / slip-off!) */}
+            <g className={pose === "wool-rollaway" || pose === "slip-off" ? "cat-wool-rollaway" : "cat-wool-on-belly"}>
+              <circle cx="67" cy="74" r="12" fill={palette.yarn} stroke="#ffffff" strokeWidth="1.2" />
+              <path d="M 58 70 Q 67 64 76 72" stroke="#ffffff" strokeWidth="1.8" fill="none" opacity="0.85" />
+              <path d="M 57 76 Q 67 71 77 78" stroke="#ffffff" strokeWidth="1.8" fill="none" opacity="0.85" />
+              <path d="M 63 64 Q 70 74 64 84" stroke="#ffffff" strokeWidth="1.8" fill="none" opacity="0.85" />
+              <path d="M 78 78 Q 88 82 92 75" stroke={palette.yarn} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            </g>
+
+            {/* Front Paw hugging the wool ball */}
+            <g className={pose === "wool-biting" ? "cat-hug-paws" : ""}>
+              <ellipse cx="54" cy="75" rx="7" ry="5" fill={palette.belly} stroke={palette.coatDark} strokeWidth="1.5" />
+            </g>
+
+            {/* Head leaning over the belly trying to bite the wool ball */}
+            <g className={pose === "wool-biting" && !nearCursor ? "cat-head-biting" : "cat-head"}>
+              <polygon points="18,62 10,38 30,48" fill={palette.coatDark} stroke={palette.coat} strokeWidth="1.5" strokeLinejoin="round" />
+              <polygon points="20,59 14,42 28,49" fill={palette.earInner} />
+              <polygon points="52,54 58,32 40,44" fill={palette.coatDark} stroke={palette.coat} strokeWidth="1.5" strokeLinejoin="round" />
+              <polygon points="50,52 54,36 42,45" fill={palette.earInner} />
+
+              <ellipse cx="38" cy="68" rx="23" ry="19" fill={palette.coat} />
+              {breed === "siamese" && (
+                <ellipse cx="40" cy="70" rx="15" ry="12" fill={palette.coatDark} opacity="0.85" />
+              )}
+
+              {eyesClosedInWool ? (
+                <g stroke={palette.closedEye} strokeWidth="2.8" fill="none" strokeLinecap="round">
+                  <path d="M 25 63 L 33 67 L 25 71" />
+                  <path d="M 51 63 L 43 67 L 51 71" />
+                </g>
+              ) : (
+                <g>
+                  <circle cx="30" cy="65" r="6.5" fill="#ffffff" />
+                  <circle cx="48" cy="65" r="6.5" fill="#ffffff" />
+                  <g style={{ transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
+                    <circle cx="30" cy="65" r="4.6" fill={palette.eye} />
+                    <circle cx="48" cy="65" r="4.6" fill={palette.eye} />
+                    <ellipse cx="30" cy="65" rx="2.8" ry="3.6" fill="#0f172a" />
+                    <ellipse cx="48" cy="65" rx="2.8" ry="3.6" fill="#0f172a" />
+                    <circle cx="28.5" cy="63.5" r="1.3" fill="#ffffff" />
+                    <circle cx="46.5" cy="63.5" r="1.3" fill="#ffffff" />
+                  </g>
+                </g>
+              )}
+
+              <polygon points="39,71 44,71 41.5,74" fill={palette.nose} />
+
+              {pose === "wool-biting" ? (
+                <g>
+                  <ellipse cx="44" cy="78" rx="5.5" ry="4" fill="#fb7185" stroke={palette.closedEye} strokeWidth="1.5" />
+                  <polygon points="41,75 43,75 42,78" fill="#ffffff" />
+                  <polygon points="45,75 47,75 46,78" fill="#ffffff" />
+                </g>
+              ) : (
+                <path
+                  d="M 37 77 Q 40 80 42 77 Q 44 80 47 77"
+                  fill="none"
+                  stroke={palette.closedEye}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              )}
+            </g>
+          </g>
+        )}
+
+        {/* ───────── GROUP C: STANDING UP & SLOW 360° RIGHT-TO-LEFT TURN BEFORE SLEEP ───────── */}
+        {isStandingPose && (
+          <g className={pose === "spin-360" ? "cat-standing-spin360" : pose === "wake-stretch" ? "cat-standing-stretch" : "cat-standing-rise"}>
+            <ellipse cx="65" cy="106" rx="40" ry="6.5" fill="rgba(0,0,0,0.24)" />
+
+            {/* Upright curved tail */}
+            <path
+              d="M 94 74 Q 116 54 108 34"
+              fill="none"
+              stroke={palette.coatDark}
+              strokeWidth="8"
+              strokeLinecap="round"
+            />
+
+            {/* 4 Standing Legs with little stepping motion during the 360 spin */}
+            <g className="cat-standing-legs">
+              <rect x="40" y="82" width="9" height="22" rx="4.5" fill={palette.coatDark} />
+              <ellipse cx="44.5" cy="103" rx="6" ry="3.5" fill={palette.belly} />
+              <rect x="53" y="84" width="9" height="21" rx="4.5" fill={palette.coat} />
+              <ellipse cx="57.5" cy="104" rx="6" ry="3.5" fill={palette.belly} />
+              <rect x="74" y="82" width="9" height="22" rx="4.5" fill={palette.coatDark} />
+              <ellipse cx="78.5" cy="103" rx="6" ry="3.5" fill={palette.belly} />
+              <rect x="85" y="84" width="9" height="21" rx="4.5" fill={palette.coat} />
+              <ellipse cx="89.5" cy="104" rx="6" ry="3.5" fill={palette.belly} />
+            </g>
+
+            {/* Standing Arched Body */}
+            <ellipse cx="68" cy="76" rx="30" ry="16" fill={palette.coat} />
+            <ellipse cx="66" cy="80" rx="18" ry="9" fill={palette.belly} />
+
+            {/* Head while standing / turning */}
+            <g>
+              <polygon points="24,52 16,28 38,38" fill={palette.coatDark} stroke={palette.coat} strokeWidth="1.5" strokeLinejoin="round" />
+              <polygon points="26,49 20,33 35,40" fill={palette.earInner} />
+              <polygon points="62,50 68,28 48,38" fill={palette.coatDark} stroke={palette.coat} strokeWidth="1.5" strokeLinejoin="round" />
+              <polygon points="60,48 64,33 50,40" fill={palette.earInner} />
+
+              <ellipse cx="44" cy="58" rx="24" ry="20" fill={palette.coat} />
+              {breed === "siamese" && (
+                <ellipse cx="44" cy="60" rx="15" ry="12" fill={palette.coatDark} opacity="0.85" />
+              )}
+
+              {/* Sleepy half-closed eyes during pre-bed ritual */}
+              <g stroke={palette.closedEye} strokeWidth="2.6" fill="none" strokeLinecap="round">
+                <path d="M 30 56 Q 35 60 40 56" />
+                <path d="M 48 56 Q 53 60 58 56" />
+              </g>
+              <polygon points="41,62 47,62 44,65" fill={palette.nose} />
+            </g>
+          </g>
+        )}
+
+        {/* ───────── GROUP D: SITTING POSE (+ WOOL ROLLING IN) ───────── */}
+        {(pose === "sitting" || pose === "wool-rollin") && (
+          <g className={pose === "wool-rollin" ? "cat-flopping-back" : ""}>
+            <ellipse cx="65" cy="108" rx="36" ry="7" fill="rgba(0,0,0,0.22)" />
+
+            <path
+              className="cat-tail"
+              d="M 91 92 Q 117 82 111 56 Q 108 46 101 52"
+              fill="none"
+              stroke={palette.coatDark}
+              strokeWidth="9"
+              strokeLinecap="round"
+            />
+
+            <ellipse cx="65" cy="84" rx="28" ry="23" fill={palette.coat} />
+            <ellipse cx="65" cy="87" rx="17" ry="15" fill={palette.belly} />
+
+            {breed === "calico" && (
+              <>
+                <circle cx="47" cy="78" r="9" fill={palette.coatDark} />
+                <circle cx="82" cy="82" r="8" fill={palette.stripes} />
+              </>
+            )}
+
+            <g
+              className="cat-head"
+              style={{
+                transform: `translate(${eyeOffset.x * 0.6}px, ${eyeOffset.y * 0.4}px) rotate(${eyeOffset.x * 1.4}deg)`,
+                transformOrigin: "65px 54px"
+              }}
+            >
+              <polygon points="35,42 29,14 53,28" fill={palette.coatDark} stroke={palette.coat} strokeWidth="2" strokeLinejoin="round" />
+              <polygon points="37,38 33,20 49,29" fill={palette.earInner} />
+              <polygon points="95,42 101,14 77,28" fill={palette.coatDark} stroke={palette.coat} strokeWidth="2" strokeLinejoin="round" />
+              <polygon points="93,38 97,20 81,29" fill={palette.earInner} />
+
+              <ellipse cx="65" cy="50" rx="30" ry="25" fill={palette.coat} />
+              {breed === "siamese" && (
+                <ellipse cx="65" cy="53" rx="19" ry="15" fill={palette.coatDark} opacity="0.85" />
+              )}
+
+              {(breed === "ginger" || breed === "cyber") && (
+                <g stroke={palette.stripes} strokeWidth="2.6" strokeLinecap="round" opacity="0.75">
+                  <line x1="65" y1="28" x2="65" y2="36" />
+                  <line x1="58" y1="30" x2="60" y2="37" />
+                  <line x1="72" y1="30" x2="70" y2="37" />
+                </g>
+              )}
+
+              <ellipse cx="43" cy="57" rx="5" ry="3" fill="#fb7185" opacity="0.45" />
+              <ellipse cx="87" cy="57" rx="5" ry="3" fill="#fb7185" opacity="0.45" />
+
+              {blinking ? (
+                <g stroke={palette.closedEye} strokeWidth="3" fill="none" strokeLinecap="round">
+                  <path d="M 46 48 Q 52 54 58 48" />
+                  <path d="M 72 48 Q 78 54 84 48" />
+                </g>
+              ) : (
+                <g>
+                  <circle cx="52" cy="48" r="7.5" fill="#ffffff" />
+                  <circle cx="78" cy="48" r="7.5" fill="#ffffff" />
+                  <g style={{ transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
+                    <circle cx="52" cy="48" r="5.2" fill={palette.eye} />
+                    <circle cx="78" cy="48" r="5.2" fill={palette.eye} />
+                    <ellipse cx="52" cy="48" rx={nearCursor ? "3.2" : "2.3"} ry="4.2" fill="#0f172a" />
+                    <ellipse cx="78" cy="48" rx={nearCursor ? "3.2" : "2.3"} ry="4.2" fill="#0f172a" />
+                    <circle cx="50" cy="46" r="1.5" fill="#ffffff" />
+                    <circle cx="76" cy="46" r="1.5" fill="#ffffff" />
+                  </g>
+                </g>
+              )}
+
+              <polygon points="62,55 68,55 65,59" fill={palette.nose} />
+              <path
+                d="M 59 62 Q 62 65 65 61 Q 68 65 71 62"
+                fill="none"
+                stroke={palette.closedEye}
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+
+              <g stroke={palette.closedEye} strokeWidth="1.4" strokeLinecap="round" opacity="0.7">
+                <line x1="27" y1="53" x2="40" y2="55" />
+                <line x1="26" y1="59" x2="40" y2="59" />
+                <line x1="103" y1="53" x2="90" y2="55" />
+                <line x1="104" y1="59" x2="90" y2="59" />
+              </g>
+            </g>
+
+            <g className={nearCursor ? "cat-paw-active" : "cat-paw"}>
+              <ellipse cx="49" cy="101" rx="8" ry="6" fill={palette.belly} stroke={palette.coatDark} strokeWidth="1.5" />
+              <circle cx="46" cy="100" r="1.4" fill={palette.earInner} />
+              <circle cx="49" cy="99" r="1.4" fill={palette.earInner} />
+              <circle cx="52" cy="100" r="1.4" fill={palette.earInner} />
+            </g>
+
+            <g>
+              <ellipse cx="81" cy="101" rx="8" ry="6" fill={palette.belly} stroke={palette.coatDark} strokeWidth="1.5" />
+              <circle cx="78" cy="100" r="1.4" fill={palette.earInner} />
+              <circle cx="81" cy="99" r="1.4" fill={palette.earInner} />
+              <circle cx="84" cy="100" r="1.4" fill={palette.earInner} />
+            </g>
+
+            {pose === "wool-rollin" && (
+              <g className="wool-rollin-anim">
+                <circle cx="28" cy="96" r="11" fill={palette.yarn} stroke="#ffffff" strokeWidth="1.2" />
+                <path d="M 20 92 Q 28 87 36 94" stroke="#ffffff" strokeWidth="1.7" fill="none" />
+                <path d="M 19 98 Q 28 94 37 100" stroke="#ffffff" strokeWidth="1.7" fill="none" />
+              </g>
+            )}
+          </g>
+        )}
+      </svg>
+
+      {badgeText && <span className="cat-badge-pill">{badgeText}</span>}
+    </div>
+  );
+}
