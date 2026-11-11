@@ -50,3 +50,14 @@ test("attemptView hides correctOption while in-progress and reveals breakdown on
   assert.equal(reviewView.user.name, "Kedar");
 });
 
+
+import { computeGradeLetter } from "./attempts.js";
+
+test("computeGradeLetter maps percentage scores to academic grade letters", () => {
+  assert.equal(computeGradeLetter(95), "S");
+  assert.equal(computeGradeLetter(82), "A");
+  assert.equal(computeGradeLetter(74), "B");
+  assert.equal(computeGradeLetter(61), "C");
+  assert.equal(computeGradeLetter(50), "D");
+  assert.equal(computeGradeLetter(40), "F");
+});
