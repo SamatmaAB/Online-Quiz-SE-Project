@@ -7,7 +7,7 @@
     "description": "",
     "units": [
       {
-        "name": "Unit 1: Intro to SE & Requirements Engineering",
+        "name": "Unit 1: Introduction to SE & Requirements Engineering",
         "topics": [
           {
             "name": "What is Software Engineering",
@@ -411,13 +411,13 @@
   },
   "KOTLIN": {
     "key": "KOTLIN",
-    "name": "Modern Android Dev with Kotlin",
+    "name": "Modern Android Development with Kotlin",
     "code": "UE24CS343AB4",
     "courseType": "EC",
     "description": "",
     "units": [
       {
-        "name": "Unit 1: Intro to Android & Kotlin",
+        "name": "Unit 1: Introduction to Android & Kotlin",
         "topics": [
           {
             "name": "Android development environment",
@@ -556,13 +556,13 @@
   },
   "DBMS": {
     "key": "DBMS",
-    "name": "Database Management System",
+    "name": "Database Management Systems",
     "code": "UE24CS351A",
     "courseType": "CC",
     "description": "",
     "units": [
       {
-        "name": "Unit 1: Intro to DBMS & SQL",
+        "name": "Unit 1: Introduction to DBMS & SQL",
         "topics": [
           {
             "name": "Purpose & view of data",
@@ -707,7 +707,7 @@
     "description": "",
     "units": [
       {
-        "name": "Unit 1: Intro, Metrics, Decision Trees & KNN",
+        "name": "Unit 1: Introduction, Metrics, Decision Trees & KNN",
         "topics": [
           {
             "name": "What is Machine Learning",
