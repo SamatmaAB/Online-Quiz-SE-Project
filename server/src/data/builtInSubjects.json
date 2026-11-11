@@ -1,0 +1,847 @@
+{
+  "SE": {
+    "key": "SE",
+    "name": "Software Engineering",
+    "code": "UE24CS341A",
+    "courseType": "CC",
+    "description": "",
+    "units": [
+      {
+        "name": "Unit 1: Intro to SE & Requirements Engineering",
+        "topics": [
+          {
+            "name": "What is Software Engineering",
+            "description": "A disciplined, systematic approach to designing, building, and maintaining software, as opposed to writing code ad hoc."
+          },
+          {
+            "name": "SDLC",
+            "description": "Software Development Life Cycle — the standard stages a project passes through: requirements, design, implementation, testing, deployment, maintenance."
+          },
+          {
+            "name": "Agile methodology",
+            "description": "An iterative development approach that delivers working software in short cycles and adapts to changing requirements, instead of planning everything upfront."
+          },
+          {
+            "name": "Scrum",
+            "description": "A specific Agile framework organized around fixed-length sprints, daily stand-ups, and defined roles like Scrum Master and Product Owner."
+          },
+          {
+            "name": "Requirements elicitation",
+            "description": "The process of gathering what stakeholders actually need from the system, through interviews, surveys, or observation."
+          },
+          {
+            "name": "Functional requirements",
+            "description": "Statements of what the system must do — specific features and behaviors."
+          },
+          {
+            "name": "Non-functional requirements",
+            "description": "Requirements about how the system performs its functions — e.g. speed, security, reliability — rather than what it does."
+          },
+          {
+            "name": "Software Requirement Specification (SRS)",
+            "description": "A formal document that fully describes a system's intended functionality, used as the reference for design and testing."
+          },
+          {
+            "name": "Requirement Traceability Matrix",
+            "description": "A table linking each requirement to the design, code, and test cases that implement and verify it."
+          },
+          {
+            "name": "UML use case diagrams",
+            "description": "Diagrams showing how different users (actors) interact with a system's features (use cases)."
+          },
+          {
+            "name": "Test planning",
+            "description": "Deciding in advance what will be tested, how, and by whom, before development begins."
+          }
+        ]
+      },
+      {
+        "name": "Unit 2: Project Management & Architecture",
+        "topics": [
+          {
+            "name": "Project management (PM) role",
+            "description": "Coordinating people, schedules, and resources so a software project is delivered on time and within scope."
+          },
+          {
+            "name": "Time estimation & scheduling",
+            "description": "Predicting how long tasks will take and sequencing them so the project has a realistic timeline."
+          },
+          {
+            "name": "Risk management",
+            "description": "Identifying things that could go wrong in a project and planning how to prevent or respond to them."
+          },
+          {
+            "name": "Gantt chart",
+            "description": "A bar-chart timeline showing project tasks against time, used to track schedule and dependencies."
+          },
+          {
+            "name": "Software architecture",
+            "description": "The high-level structure of a system — its major components and how they interact — decided before detailed design."
+          },
+          {
+            "name": "Design patterns",
+            "description": "Reusable, proven solutions to common software design problems."
+          },
+          {
+            "name": "Microservices",
+            "description": "An architecture style where an application is built as many small, independently deployable services rather than one large program."
+          },
+          {
+            "name": "Modularity (API & ABI)",
+            "description": "Breaking a system into independent, interchangeable parts; an API defines how modules talk to each other in code, an ABI defines it at the binary level."
+          },
+          {
+            "name": "Technical debt",
+            "description": "The extra future work created when a quick, imperfect solution is chosen now instead of a better one."
+          },
+          {
+            "name": "Test-driven development (TDD)",
+            "description": "Writing a test for a feature before writing the code that implements it."
+          }
+        ]
+      },
+      {
+        "name": "Unit 3: AI, Implementation, SCM, DevOps",
+        "topics": [
+          {
+            "name": "AI for software engineering",
+            "description": "Using AI tools to assist with writing, reviewing, or reasoning about code during development."
+          },
+          {
+            "name": "Coding standards & guidelines",
+            "description": "Agreed-upon rules for how code should be written, to keep a codebase consistent and readable across a team."
+          },
+          {
+            "name": "Code review",
+            "description": "Having another developer examine your code changes before they're merged, to catch bugs and improve quality."
+          },
+          {
+            "name": "CI/CD pipeline",
+            "description": "Continuous Integration / Continuous Deployment — automated processes that build, test, and release code changes frequently and reliably."
+          },
+          {
+            "name": "DevSecOps",
+            "description": "Integrating security practices directly into the development and operations pipeline, rather than checking for security only at the end."
+          },
+          {
+            "name": "Static and dynamic testing",
+            "description": "Static testing examines code without running it (e.g. code review); dynamic testing runs the program to observe its actual behavior."
+          },
+          {
+            "name": "Software Configuration Management (SCM)",
+            "description": "Tracking and controlling changes to a project's code and files over time, typically via version control."
+          },
+          {
+            "name": "Defect and bug management",
+            "description": "The process of logging, prioritizing, fixing, and verifying fixes for issues found in software."
+          },
+          {
+            "name": "Patch and release management",
+            "description": "Planning how updates and fixes are packaged and delivered to users in a controlled way."
+          }
+        ]
+      },
+      {
+        "name": "Unit 4: Usability, Quality & System Testing",
+        "topics": [
+          {
+            "name": "Quality metrics & measurements",
+            "description": "Quantifiable indicators (e.g. defect density, test coverage) used to judge how good a piece of software is."
+          },
+          {
+            "name": "Risk management for quality",
+            "description": "Identifying what could cause quality failures and planning to reduce that risk before it happens."
+          },
+          {
+            "name": "Code coverage",
+            "description": "A measurement of what percentage of the code was actually executed while running the test suite."
+          },
+          {
+            "name": "Ethics in AI usage",
+            "description": "Considering the responsible, fair, and transparent use of AI tools and AI-generated code in software projects."
+          },
+          {
+            "name": "Software patents",
+            "description": "Legal protection that can be granted for a novel software invention, giving the owner exclusive rights to it."
+          },
+          {
+            "name": "System testing",
+            "description": "Testing the complete, integrated system as a whole, rather than individual components."
+          },
+          {
+            "name": "Security validation & penetration testing",
+            "description": "Deliberately probing a system for security weaknesses the way an attacker would, to find and fix them first."
+          },
+          {
+            "name": "Fuzzing",
+            "description": "A testing technique that feeds a program random or malformed input to try to trigger crashes or unexpected behavior."
+          },
+          {
+            "name": "Software evolution & maintenance",
+            "description": "The ongoing process of updating and fixing software after it's released, as needs and environments change."
+          }
+        ]
+      }
+    ]
+  },
+  "UIUX": {
+    "key": "UIUX",
+    "name": "UI/UX Design",
+    "code": "UE24CS342AA6",
+    "courseType": "EC",
+    "description": "",
+    "units": [
+      {
+        "name": "Unit 1: Foundations of HCI & UX Design",
+        "topics": [
+          {
+            "name": "What is HCI",
+            "description": "The study of how people interact with computers and digital systems, and how to design that interaction well."
+          },
+          {
+            "name": "Human factors: Perception",
+            "description": "How people notice and interpret visual, auditory, and tactile information from an interface."
+          },
+          {
+            "name": "Human factors: Cognition",
+            "description": "How people think, reason, and make decisions while using an interface."
+          },
+          {
+            "name": "Human factors: Memory",
+            "description": "How much information users can hold in mind while completing a task, and how interfaces should avoid overloading it."
+          },
+          {
+            "name": "Mental models",
+            "description": "The user's internal understanding of how a system works, which may or may not match how it actually works."
+          },
+          {
+            "name": "Norman's interaction model",
+            "description": "Don Norman's framework describing the gap between what a user intends to do (Gulf of Execution) and how they interpret the result (Gulf of Evaluation)."
+          },
+          {
+            "name": "User-Centered Design (UCD)",
+            "description": "A design process that repeatedly involves real users at every stage, rather than designing based on assumptions alone."
+          },
+          {
+            "name": "UX research: Interviews",
+            "description": "One-on-one conversations with users to understand their needs, habits, and pain points."
+          },
+          {
+            "name": "UX research: Surveys",
+            "description": "Structured questionnaires used to gather user feedback at scale."
+          },
+          {
+            "name": "UX research: Observation",
+            "description": "Watching users interact with a product in a real or simulated setting to see actual behavior, not just stated opinions."
+          },
+          {
+            "name": "Affinity diagramming",
+            "description": "A technique for grouping related research findings or ideas into clusters to spot patterns."
+          },
+          {
+            "name": "Personas",
+            "description": "Fictional profiles representing typical user types, used to keep design decisions grounded in real user needs."
+          },
+          {
+            "name": "Empathy mapping",
+            "description": "A tool that maps what a user says, thinks, feels, and does, to build a fuller picture of their experience."
+          },
+          {
+            "name": "User journey mapping",
+            "description": "A visual timeline of the steps a user takes to complete a goal, including their emotions at each step."
+          },
+          {
+            "name": "Information architecture",
+            "description": "The way content and navigation are structured so users can find what they need."
+          },
+          {
+            "name": "Design principles: Affordances",
+            "description": "Visual cues that suggest how an object or element should be used (e.g. a button that looks pressable)."
+          },
+          {
+            "name": "Design principles: Feedback",
+            "description": "Signals the system gives to confirm that a user's action had an effect."
+          },
+          {
+            "name": "Design principles: Consistency",
+            "description": "Using the same patterns and behavior throughout an interface so users don't have to relearn things."
+          }
+        ]
+      },
+      {
+        "name": "Unit 2: Interaction Design & Prototyping",
+        "topics": [
+          {
+            "name": "Interaction styles",
+            "description": "The different ways users can interact with a system — e.g. typing commands, tapping a GUI, speaking, or gesturing."
+          },
+          {
+            "name": "Design thinking",
+            "description": "A problem-solving approach that cycles through empathizing, defining, ideating, prototyping, and testing."
+          },
+          {
+            "name": "Typography",
+            "description": "The choice and arrangement of fonts to make text readable and set visual tone."
+          },
+          {
+            "name": "Color theory",
+            "description": "Principles for choosing and combining colors to create contrast, hierarchy, and mood."
+          },
+          {
+            "name": "Layout & spacing",
+            "description": "How elements are arranged and separated on a screen to guide the eye and avoid clutter."
+          },
+          {
+            "name": "Visual hierarchy",
+            "description": "Arranging elements so the most important ones draw attention first."
+          },
+          {
+            "name": "Wireframing",
+            "description": "A simplified, low-detail sketch of a screen's layout, used early to plan structure before visual design."
+          },
+          {
+            "name": "Low-fidelity prototypes",
+            "description": "Rough, quick mockups (often just sketches) used to test ideas cheaply before investing in detail."
+          },
+          {
+            "name": "High-fidelity prototypes",
+            "description": "Polished, realistic mockups that closely resemble the final product, used for detailed testing."
+          },
+          {
+            "name": "Interface design guidelines",
+            "description": "Official design standards (e.g. Google Material Design, Apple Human Interface Guidelines) that define consistent platform behavior."
+          },
+          {
+            "name": "Responsive design",
+            "description": "Designing interfaces that adapt cleanly to different screen sizes and devices."
+          }
+        ]
+      },
+      {
+        "name": "Unit 3: Usability Evaluation & Accessibility",
+        "topics": [
+          {
+            "name": "Usability: Learnability",
+            "description": "How easily a new user can figure out how to use the system."
+          },
+          {
+            "name": "Usability: Efficiency",
+            "description": "How quickly an experienced user can complete tasks."
+          },
+          {
+            "name": "Usability: Memorability",
+            "description": "How easily a returning user can remember how to use the system after time away."
+          },
+          {
+            "name": "Usability: Error prevention",
+            "description": "Designing to stop users from making mistakes, or making mistakes easy to recover from."
+          },
+          {
+            "name": "Heuristic evaluation",
+            "description": "Experts review an interface against a known set of usability principles to spot problems."
+          },
+          {
+            "name": "Cognitive walkthrough",
+            "description": "Evaluators step through a task as a new user would, checking whether each step is understandable."
+          },
+          {
+            "name": "User testing",
+            "description": "Watching real users attempt tasks with the product to find usability issues directly."
+          },
+          {
+            "name": "Think-aloud protocol",
+            "description": "A testing method where users verbalize their thoughts while using the product, revealing confusion in real time."
+          },
+          {
+            "name": "A/B testing",
+            "description": "Comparing two versions of a design with real users to see which performs better."
+          },
+          {
+            "name": "SUS (System Usability Scale)",
+            "description": "A standard 10-question survey used to score a product's perceived usability."
+          },
+          {
+            "name": "WCAG",
+            "description": "Web Content Accessibility Guidelines — the standard rules for making digital content usable by people with disabilities."
+          },
+          {
+            "name": "Dark patterns",
+            "description": "Manipulative design choices that trick users into actions they didn't intend (e.g. hidden unsubscribe buttons)."
+          }
+        ]
+      },
+      {
+        "name": "Unit 4: Emerging Trends in UI/UX & HCI",
+        "topics": [
+          {
+            "name": "AI in HCI",
+            "description": "Using AI (chatbots, recommenders, personalization) to shape or adapt the user experience."
+          },
+          {
+            "name": "Conversational UI",
+            "description": "Interfaces where users interact through natural language, like chatbots or voice assistants."
+          },
+          {
+            "name": "Voice User Interfaces (VUI)",
+            "description": "Interfaces controlled entirely by spoken commands, with no visual screen required."
+          },
+          {
+            "name": "VR/AR interfaces",
+            "description": "Interfaces for virtual reality (fully simulated) or augmented reality (digital overlays on the real world)."
+          },
+          {
+            "name": "Brain-computer interfaces",
+            "description": "Systems that let users control a device directly through brain signals, without physical input."
+          },
+          {
+            "name": "Cross-cultural UI/UX",
+            "description": "Designing interfaces that work appropriately across different languages, cultures, and reading directions."
+          },
+          {
+            "name": "Ethical & social implications of HCI",
+            "description": "Considering how interface design choices affect user wellbeing, privacy, and society at large."
+          },
+          {
+            "name": "Persuasive design",
+            "description": "Design intentionally used to influence user behavior — can be ethical (habit-building) or exploitative (dark patterns)."
+          }
+        ]
+      }
+    ]
+  },
+  "KOTLIN": {
+    "key": "KOTLIN",
+    "name": "Modern Android Dev with Kotlin",
+    "code": "UE24CS343AB4",
+    "courseType": "EC",
+    "description": "",
+    "units": [
+      {
+        "name": "Unit 1: Intro to Android & Kotlin",
+        "topics": [
+          {
+            "name": "Android development environment",
+            "description": "The toolchain (Android Studio, SDKs, emulators) used to build and test Android apps."
+          },
+          {
+            "name": "Kotlin variables & nullable types",
+            "description": "Kotlin distinguishes types that can hold null (nullable, marked with ?) from types that can never be null, catching null-related bugs at compile time."
+          },
+          {
+            "name": "Conditional statements & loops",
+            "description": "Control-flow constructs (if/when, for, while) that let a program branch or repeat based on conditions."
+          },
+          {
+            "name": "Functions & lambdas",
+            "description": "Reusable blocks of code; lambdas are small, unnamed functions that can be passed around as values."
+          },
+          {
+            "name": "Collections",
+            "description": "Built-in structures (lists, sets, maps) for storing and operating on groups of values."
+          },
+          {
+            "name": "Classes & objects",
+            "description": "Blueprints (classes) for creating structured data with behavior, and the actual instances (objects) created from them."
+          },
+          {
+            "name": "Inheritance",
+            "description": "A mechanism where one class can reuse and extend the behavior of another class."
+          },
+          {
+            "name": "Data classes",
+            "description": "A concise Kotlin class type designed specifically to hold data, with equality and printing behavior generated automatically."
+          },
+          {
+            "name": "Exception handling",
+            "description": "Code structures (try/catch) that let a program detect and recover from runtime errors instead of crashing."
+          }
+        ]
+      },
+      {
+        "name": "Unit 2: UI Development with Jetpack Compose",
+        "topics": [
+          {
+            "name": "Android app fundamentals",
+            "description": "The core building blocks of an Android app — Activities (screens), Services (background work), and BroadcastReceivers (system events)."
+          },
+          {
+            "name": "Jetpack Compose",
+            "description": "Android's modern toolkit for building UI declaratively in Kotlin code, instead of separate XML layout files."
+          },
+          {
+            "name": "Composables",
+            "description": "Functions marked to describe a piece of UI, which Compose can render and re-render automatically."
+          },
+          {
+            "name": "State management",
+            "description": "Tracking values that can change over time (like text input) so the UI automatically updates when they do."
+          },
+          {
+            "name": "LazyColumn / LazyRow",
+            "description": "Compose components that efficiently display long scrolling lists by only rendering the items currently visible."
+          },
+          {
+            "name": "Scaffold",
+            "description": "A Compose layout structure that provides standard screen elements like a top bar, bottom bar, and content area."
+          },
+          {
+            "name": "Compose navigation",
+            "description": "The system for moving between different screens (composables) within an app."
+          }
+        ]
+      },
+      {
+        "name": "Unit 3: App Components, Data Persistence",
+        "topics": [
+          {
+            "name": "Intents",
+            "description": "Objects used to request an action from another app component, like starting a new screen or sharing data."
+          },
+          {
+            "name": "BroadcastReceivers",
+            "description": "Components that listen for and respond to system-wide or app-wide broadcast events."
+          },
+          {
+            "name": "Services",
+            "description": "Components that run tasks in the background, without a user interface, even if the user isn't actively using the app."
+          },
+          {
+            "name": "SharedPreferences",
+            "description": "A simple key-value storage system for saving small amounts of app data, like settings."
+          },
+          {
+            "name": "Room database",
+            "description": "An Android library that provides a structured way to store and query local data using SQLite under the hood."
+          },
+          {
+            "name": "Resources",
+            "description": "Non-code assets (strings, images, layouts) that are kept separate from source code so they can be managed and localized easily."
+          }
+        ]
+      },
+      {
+        "name": "Unit 4: Networking, Device Features, Deployment",
+        "topics": [
+          {
+            "name": "Retrofit",
+            "description": "A popular Android library for making HTTP network requests to web APIs in a type-safe way."
+          },
+          {
+            "name": "Glide",
+            "description": "A library for efficiently loading and caching images from the internet into an app's UI."
+          },
+          {
+            "name": "Application signing",
+            "description": "Digitally signing an app package to verify its authenticity before it can be published or installed."
+          },
+          {
+            "name": "Play Store deployment",
+            "description": "The process of packaging and publishing an Android app so it becomes available to users on Google Play."
+          },
+          {
+            "name": "Device sensors & camera",
+            "description": "Hardware features (accelerometer, GPS, camera, etc.) that apps can access through Android APIs."
+          },
+          {
+            "name": "Firebase integration",
+            "description": "Using Google's Firebase platform for backend features like authentication, databases, or push notifications."
+          },
+          {
+            "name": "ML Kit / GenAI APIs",
+            "description": "Google's on-device machine learning and generative AI APIs that apps can call to add smart features."
+          }
+        ]
+      }
+    ]
+  },
+  "DBMS": {
+    "key": "DBMS",
+    "name": "Database Management System",
+    "code": "UE24CS351A",
+    "courseType": "CC",
+    "description": "",
+    "units": [
+      {
+        "name": "Unit 1: Intro to DBMS & SQL",
+        "topics": [
+          {
+            "name": "Purpose & view of data",
+            "description": "Why databases exist — to store, organize, and retrieve data reliably, presenting different views to different users."
+          },
+          {
+            "name": "Database application architecture",
+            "description": "How an application's layers (client, application logic, database) are structured and communicate."
+          },
+          {
+            "name": "E-R Model",
+            "description": "Entity-Relationship Model — a way of designing a database by identifying entities (things), their attributes, and the relationships between them."
+          },
+          {
+            "name": "Reducing ER to relational schema",
+            "description": "The process of converting an E-R diagram into actual database tables and columns."
+          },
+          {
+            "name": "Relational algebra",
+            "description": "A formal set of operations (select, project, join, etc.) used to query and manipulate relational data mathematically."
+          },
+          {
+            "name": "SQL overview",
+            "description": "Structured Query Language — the standard language for defining, querying, and manipulating relational databases."
+          },
+          {
+            "name": "Data definition (DDL)",
+            "description": "SQL commands used to define database structure, such as CREATE TABLE and ALTER TABLE."
+          },
+          {
+            "name": "Constraints & keys",
+            "description": "Rules (primary key, foreign key, unique, not null) that enforce data integrity in a table."
+          }
+        ]
+      },
+      {
+        "name": "Unit 2: Advanced SQL in Database Design",
+        "topics": [
+          {
+            "name": "Database modification (DML)",
+            "description": "SQL commands that change data — INSERT, UPDATE, DELETE."
+          },
+          {
+            "name": "Set operations",
+            "description": "SQL operations (UNION, INTERSECT, EXCEPT) that combine or compare the results of multiple queries."
+          },
+          {
+            "name": "Aggregate functions & grouping",
+            "description": "Functions like COUNT, SUM, AVG that compute a single value across a group of rows, often combined with GROUP BY."
+          },
+          {
+            "name": "Nested & correlated subqueries",
+            "description": "A query written inside another query; correlated subqueries reference values from the outer query, re-running per row."
+          },
+          {
+            "name": "Join expressions",
+            "description": "SQL operations that combine rows from two or more tables based on a related column."
+          },
+          {
+            "name": "Views",
+            "description": "A saved, named SQL query that behaves like a virtual table when queried."
+          },
+          {
+            "name": "Triggers",
+            "description": "Database code that runs automatically in response to a specific event, like a row being inserted or updated."
+          },
+          {
+            "name": "Stored procedures & functions",
+            "description": "Reusable blocks of SQL logic saved in the database itself, callable like a function."
+          },
+          {
+            "name": "Common Table Expressions (CTE)",
+            "description": "A temporary, named result set defined within a query using WITH, used to simplify complex SQL."
+          },
+          {
+            "name": "Window functions",
+            "description": "Functions that perform calculations across a set of rows related to the current row, without collapsing them into one result like GROUP BY does."
+          }
+        ]
+      },
+      {
+        "name": "Unit 3: Design Concepts & Implementation",
+        "topics": [
+          {
+            "name": "Query processing & optimization",
+            "description": "How a database decides the most efficient way to execute a given SQL query."
+          },
+          {
+            "name": "Functional dependencies",
+            "description": "A relationship where one attribute's value determines another attribute's value in a table, used as the basis for normalization."
+          },
+          {
+            "name": "Normal forms (1NF, 2NF, 3NF)",
+            "description": "A series of rules for organizing tables to reduce data redundancy and avoid update anomalies."
+          },
+          {
+            "name": "Boyce-Codd Normal Form (BCNF)",
+            "description": "A stricter version of 3NF that removes remaining anomalies caused by certain functional dependencies."
+          }
+        ]
+      },
+      {
+        "name": "Unit 4: Next-Gen Data Management",
+        "topics": [
+          {
+            "name": "Database transactions",
+            "description": "A sequence of operations treated as a single unit — either all of them succeed, or none do."
+          },
+          {
+            "name": "Concurrency control",
+            "description": "Techniques that let multiple transactions run at the same time without corrupting each other's data."
+          },
+          {
+            "name": "Locking",
+            "description": "A concurrency control mechanism that restricts access to data while a transaction is using it, to prevent conflicts."
+          },
+          {
+            "name": "NoSQL databases",
+            "description": "Databases that don't use the traditional relational table model, often designed for flexibility or scale (e.g. document, key-value stores)."
+          },
+          {
+            "name": "Key-value databases",
+            "description": "A simple NoSQL model that stores data as pairs of a unique key and its associated value."
+          },
+          {
+            "name": "Graph databases",
+            "description": "Databases optimized for storing and querying data as nodes and relationships, useful for highly connected data."
+          },
+          {
+            "name": "Vector databases",
+            "description": "Databases designed to store and search high-dimensional vectors, commonly used for AI similarity search."
+          }
+        ]
+      }
+    ]
+  },
+  "ML": {
+    "key": "ML",
+    "name": "Machine Learning",
+    "code": "UE24CS352A",
+    "courseType": "CC",
+    "description": "",
+    "units": [
+      {
+        "name": "Unit 1: Intro, Metrics, Decision Trees & KNN",
+        "topics": [
+          {
+            "name": "What is Machine Learning",
+            "description": "A field of AI where systems learn patterns from data instead of being explicitly programmed with rules."
+          },
+          {
+            "name": "Concept learning & hypothesis space",
+            "description": "Learning a general rule (hypothesis) from labeled examples that correctly classifies new, unseen data."
+          },
+          {
+            "name": "Performance metrics: Accuracy, Precision, Recall",
+            "description": "Accuracy is overall correctness; precision is how many predicted positives were actually correct; recall is how many actual positives were correctly found."
+          },
+          {
+            "name": "ROC & AUC",
+            "description": "ROC is a curve plotting a classifier's true-positive vs false-positive rate at different thresholds; AUC summarizes it as a single score."
+          },
+          {
+            "name": "Bias-variance tradeoff",
+            "description": "The balance between a model being too simple to capture patterns (high bias) and too sensitive to noise in training data (high variance)."
+          },
+          {
+            "name": "Cross validation",
+            "description": "A technique for testing a model's performance by training and evaluating it on different splits of the data, to get a reliable estimate."
+          },
+          {
+            "name": "Decision Trees",
+            "description": "A model that makes predictions by following a series of if-then splits on feature values, shaped like a tree."
+          },
+          {
+            "name": "Overfitting",
+            "description": "When a model learns the training data too closely, including its noise, and performs poorly on new data."
+          },
+          {
+            "name": "Logistic Regression",
+            "description": "A classification algorithm that predicts the probability of a binary outcome using a linear combination of inputs."
+          },
+          {
+            "name": "K-Nearest Neighbors (KNN)",
+            "description": "A classification method that predicts a data point's label based on the labels of its closest neighbors in the training data."
+          }
+        ]
+      },
+      {
+        "name": "Unit 2: ANN & SVM",
+        "topics": [
+          {
+            "name": "Artificial Neural Networks (ANN)",
+            "description": "Models loosely inspired by the brain, made of layers of connected nodes that learn to map inputs to outputs."
+          },
+          {
+            "name": "Perceptron",
+            "description": "The simplest type of neural network unit, which makes a binary decision based on a weighted sum of its inputs."
+          },
+          {
+            "name": "Multi-layer networks & backpropagation",
+            "description": "Networks with hidden layers between input and output, trained by backpropagation — an algorithm that adjusts weights based on prediction error."
+          },
+          {
+            "name": "Activation functions",
+            "description": "Functions (e.g. Sigmoid, ReLU, Tanh) applied at each neuron that let a network learn non-linear patterns."
+          },
+          {
+            "name": "Optimizers (SGD, Adam, etc.)",
+            "description": "Algorithms that adjust a model's weights during training to minimize prediction error efficiently."
+          },
+          {
+            "name": "Support Vector Machines (SVM)",
+            "description": "A classification algorithm that finds the best boundary (hyperplane) separating classes by maximizing the margin between them."
+          },
+          {
+            "name": "Kernel functions",
+            "description": "Functions that let SVMs separate data that isn't linearly separable, by implicitly mapping it into a higher-dimensional space."
+          }
+        ]
+      },
+      {
+        "name": "Unit 3: Boosting, Bayesian Learning, HMM",
+        "topics": [
+          {
+            "name": "Boosting",
+            "description": "An ensemble technique that combines many weak models sequentially, each correcting the errors of the previous one."
+          },
+          {
+            "name": "Random Forest",
+            "description": "An ensemble method that builds many decision trees on random subsets of data and averages their predictions."
+          },
+          {
+            "name": "Bayes' theorem",
+            "description": "A formula for updating the probability of a hypothesis as new evidence becomes available."
+          },
+          {
+            "name": "Naive Bayes Classifier",
+            "description": "A simple probabilistic classifier that applies Bayes' theorem, assuming features are independent of each other."
+          },
+          {
+            "name": "Maximum likelihood estimation",
+            "description": "A method for choosing model parameters that make the observed data most probable."
+          },
+          {
+            "name": "Hidden Markov Models (HMM)",
+            "description": "A model for sequential data where the system is assumed to move through hidden (unobserved) states over time."
+          }
+        ]
+      },
+      {
+        "name": "Unit 4: Unsupervised Learning & ML Deployment",
+        "topics": [
+          {
+            "name": "Clustering",
+            "description": "Grouping data points into clusters based on similarity, without using labeled examples."
+          },
+          {
+            "name": "K-Means clustering",
+            "description": "A clustering algorithm that partitions data into K groups by repeatedly assigning points to the nearest cluster center and updating centers."
+          },
+          {
+            "name": "Reinforcement Learning basics",
+            "description": "A learning approach where an agent learns to make decisions by taking actions in an environment and receiving rewards or penalties."
+          },
+          {
+            "name": "Convolutional Neural Networks (CNN)",
+            "description": "A neural network architecture specialized for processing grid-like data such as images, using convolution operations to detect patterns."
+          },
+          {
+            "name": "Hyperparameter tuning",
+            "description": "The process of choosing the best configuration settings for a model (like learning rate) that aren't learned from data directly."
+          },
+          {
+            "name": "MLOps",
+            "description": "Practices for reliably deploying, monitoring, and maintaining machine learning models in production, similar to DevOps for ML."
+          }
+        ]
+      }
+    ]
+  }
+}
