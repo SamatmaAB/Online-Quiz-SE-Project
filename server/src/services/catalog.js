@@ -33,3 +33,14 @@ export function toPublicQuiz(quiz) {
     publishedAt: item.publishedAt ?? null
   };
 }
+
+export function summarizeCatalogQuizzes(quizzes = []) {
+  if (!Array.isArray(quizzes)) return { total: 0, chintsCount: 0, manualCount: 0 };
+  let chintsCount = 0;
+  let manualCount = 0;
+  for (const q of quizzes) {
+    if (q?.source === "chints") chintsCount += 1;
+    else manualCount += 1;
+  }
+  return { total: quizzes.length, chintsCount, manualCount };
+}
