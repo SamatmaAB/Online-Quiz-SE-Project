@@ -14,7 +14,7 @@ function formatClock(sec) {
 }
 
 export default function Player({ attemptId }) {
-  const { token } = useApp();
+  const { token, setActiveAttempt, askChints } = useApp();
   const toast = useToast();
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,10 @@ export default function Player({ attemptId }) {
   const submitLock = useRef(false);
   const attemptRef = useRef(null);
   attemptRef.current = attempt;
+
+  useEffect(() => {
+    setActiveAttempt?.(attempt);
+  }, [attempt, setActiveAttempt]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -112,6 +116,7 @@ export default function Player({ attemptId }) {
   const currentQ = questions[currentIdx] || questions[0];
 
   if (!isActive) {
+    const wrongCount = questions.filter((q) => !q.isCorrect).length;
     return (
       <div className="page">
         <BackLink to="/history">Attempt history</BackLink>
@@ -134,13 +139,48 @@ export default function Player({ attemptId }) {
           </div>
         </section>
 
+        <section className="card card-pad chints-review-cta">
+          <div className="row" style={{ gap: 14, flex: 1, minWidth: 240 }}>
+            <span className="stat-icon"><Icon name="sparkle" size={22} /></span>
+            <div>
+              <h3 style={{ fontSize: 17 }}>
+                {wrongCount > 0
+                  ? "Would you like to see where you went wrong and what would have been the right answer with its explanation?"
+                  : "Perfect score! Would you like Chints to explain the reasoning behind each answer?"}
+              </h3>
+              <p className="text-muted" style={{ fontSize: 13.5, marginTop: 3 }}>
+                {wrongCount > 0
+                  ? `You missed ${wrongCount} ${wrongCount === 1 ? "question" : "questions"}. Chints can break down why your choice was wrong and explain the right answer step by step.`
+                  : "Ask Chints on the left panel or click below to review any question in detail."}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => askChints?.(wrongCount > 0 ? "Yes, explain where I went wrong!" : "Explain Q1")}
+          >
+            <Icon name="sparkle" size={16} /> {wrongCount > 0 ? "Yes, explain my wrong answers" : "Explain answers with Chints"}
+          </button>
+        </section>
+
         <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <h2>Answer breakdown</h2>
           {questions.map((q, idx) => (
             <div key={q.id} className="card card-pad" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <div className="row"><span className="q-number">Q{idx + 1}</span><strong>{q.prompt}</strong></div>
-                <Badge kind={q.isCorrect ? "ok" : "danger"}>{q.isCorrect ? "Correct" : "Incorrect"}</Badge>
+                <div className="row" style={{ gap: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => askChints?.(`Explain Q${idx + 1}`)}
+                    title="Ask Chints to explain this question"
+                  >
+                    <Icon name="sparkle" size={14} /> {q.isCorrect ? "Ask Chints to explain" : "Ask Chints why I was wrong"}
+                  </button>
+                  <Badge kind={q.isCorrect ? "ok" : "danger"}>{q.isCorrect ? "Correct" : "Incorrect"}</Badge>
+                </div>
               </div>
               <div className="answer-list">
                 {q.options.map((opt, oIdx) => {
