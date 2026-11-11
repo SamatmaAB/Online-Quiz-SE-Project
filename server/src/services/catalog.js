@@ -27,6 +27,9 @@ export function toPublicQuiz(quiz) {
     durationMinutes: item.durationMinutes,
     totalQuestions: item.totalQuestions,
     difficulty: item.difficulty,
+    subjectKey: item.subjectKey ?? null,
+    unitIndex: item.unitIndex ?? null,
+    source: item.source ?? "manual",
     publishedAt: item.publishedAt ?? null
   };
 }

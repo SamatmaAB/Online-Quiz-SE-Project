@@ -22,12 +22,14 @@ router.post("/register", authLimiter, async (req, res, next) => {
     const name = String(req.body.name || "").trim();
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
+    const rawRole = String(req.body.role || "student").trim().toLowerCase();
+    const role = rawRole === "teacher" || rawRole === "admin" ? "admin" : "user";
     if (name.length < 2 || name.length > 80) return res.status(400).json({ message: "Name must be 2–80 characters" });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: "Enter a valid email address" });
     if (password.length < 8 || password.length > 72) return res.status(400).json({ message: "Password must be 8–72 characters" });
     if (await User.exists({ email })) return res.status(409).json({ message: "An account with this email already exists" });
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({ name, email, passwordHash });
+    const user = await User.create({ name, email, passwordHash, role });
     return res.status(201).json({ token: issueToken(user), user: publicUser(user) });
   } catch (error) {
     if (error.code === 11000) return res.status(409).json({ message: "An account with this email already exists" });

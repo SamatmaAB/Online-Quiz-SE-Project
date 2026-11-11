@@ -6,6 +6,9 @@ import passwordResetRoutes from "./routes/passwordReset.js";
 import quizRoutes from "./routes/quizzes.js";
 import attemptRoutes from "./routes/attempts.js";
 import categoryRoutes from "./routes/categories.js";
+import subjectRoutes from "./routes/subjects.js";
+import adminRoutes from "./routes/admin.js";
+import aiRoutes from "./routes/ai.js";
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -18,13 +21,16 @@ const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "512kb" }));
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/auth/password-reset", passwordResetRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/attempts", attemptRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/ai", aiRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
