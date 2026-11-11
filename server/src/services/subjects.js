@@ -85,3 +85,8 @@ Return ONLY a JSON array, one object per unit IN THE SAME ORDER as given above:
     return parseSyllabus(text);
   }
 }
+
+export function countSyllabusTopics(units = []) {
+  if (!Array.isArray(units)) return 0;
+  return units.reduce((sum, u) => sum + (Array.isArray(u?.topics) ? u.topics.length : 0), 0);
+}
