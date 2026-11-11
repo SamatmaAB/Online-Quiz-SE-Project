@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
 import CustomSubject from "../models/CustomSubject.js";
+import { looksUnsplit, parseSyllabus } from "./subjects.js";
 
 const require = createRequire(import.meta.url);
 export const builtInSubjects = require("../data/builtInSubjects.json");
@@ -18,7 +19,12 @@ export async function subjectForUser(subjectKey, userId) {
   if (builtInSubjects[subjectKey]) return { ...builtInSubjects[subjectKey], isCustom: false };
   if (!CUSTOM_KEY_PATTERN.test(subjectKey)) return null;
   const custom = await CustomSubject.findOne({ key: subjectKey, owner: userId }).lean();
-  return custom ? customView(custom) : null;
+  if (!custom) return null;
+  if (looksUnsplit(custom.units, custom.syllabusText)) {
+    custom.units = parseSyllabus(custom.syllabusText);
+    await CustomSubject.updateOne({ _id: custom._id }, { $set: { units: custom.units } });
+  }
+  return customView(custom);
 }
 
 
