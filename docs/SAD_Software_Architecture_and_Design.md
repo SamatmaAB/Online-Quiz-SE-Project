@@ -182,3 +182,9 @@ In accordance with the project evaluation guidelines (*"Deviations from the init
 | View Student-Created Quizzes in Catalog | No | Own Quizzes Only | All Accounts |
 | Generate Quizzes with Chints AI Studio | No | Yes | Yes |
 | Access Teacher Console (`/api/admin/overview`) | No | No (`403`) | Yes |
+
+## 11. Error Handling & Resilience Design
+
+1. **AI Provider Resilience**: `generateQuestionsWithChints()` enforces a 45-second `AbortSignal.timeout` on upstream Gemini calls and seamlessly falls back to `chintsFallbackQuestions()` on network errors or missing keys.
+2. **Idempotent Startup Seeding**: `ensureSeedData()` checks existing category/quiz counts before inserting starter records so restarts never duplicate seed data.
+3. **Expired Attempt Finalization**: `finalizeExpiredAttempts()` uses atomic MongoDB `bulkWrite` updates to prevent race conditions when grading timed-out attempts.
