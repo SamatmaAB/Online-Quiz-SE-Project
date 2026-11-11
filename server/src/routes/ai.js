@@ -474,4 +474,289 @@ export function evaluateMathExpression(rawInput) {
     atan: (x) => fromRad(Math.atan(Number(x)))
   };
 
-// Stage 2
+  const jsExpr = cleaned.replace(fnRegex, (fn) => `__env.${fn.toLowerCase()}`);
+  try {
+    const value = Function("__env", `"use strict"; return (${jsExpr});`)(trigEnv);
+    if (typeof value !== "number" || !Number.isFinite(value)) return null;
+    // Clean floating point noise like 0.5000000000000001 -> 0.5 or 3.0000000000000004 -> 3
+    const rounded = Math.abs(value) < 1e-12 ? 0 : Number(value.toFixed(8));
+    const displayExpr = cleaned
+      .replace(/\*\*/g, "^")
+      .replace(new RegExp(`\\(${Math.PI}\\)`, "g"), "π")
+      .replace(new RegExp(`\\(${Math.E}\\)`, "g"), "e");
+    const usedTrig = /\b(sin|cos|tan|sec|csc|cot|asin|acos|atan)\b/i.test(cleaned);
+    return {
+      expression: displayExpr,
+      result: rounded,
+      note: usedTrig ? (useRadians ? "Evaluated in Radians (RAD)" : "Evaluated in Degrees (DEG)") : undefined
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Builds a clear, friendly explanation for why the user's chosen option was wrong
+ * and why the correct option is right, for one or all wrong questions in a completed quiz.
+ */
+export function explainWrongQuestions(questions = [], targetQuestionNumber = null) {
+  if (!Array.isArray(questions) || !questions.length) {
+    return "I don't see any questions from your attempt yet — open any finished quiz in **Attempt History** and ask me again!";
+  }
+
+  const indexed = questions.map((q, idx) => ({ ...q, qNum: idx + 1 }));
+  const pool = targetQuestionNumber
+    ? indexed.filter((q) => q.qNum === targetQuestionNumber)
+    : indexed.filter((q) => !q.isCorrect);
+
+  if (targetQuestionNumber && pool.length === 0) {
+    return `Question ${targetQuestionNumber} isn't in this quiz (it has ${questions.length} questions). Ask me about Q1–Q${questions.length}!`;
+  }
+
+  if (pool.length === 0) {
+    return "🎉 **You got every single question right (100%)!** You didn't get any question wrong! Still, if you want me to break down a specific question (like *“explain Q1”*), just ask!";
+  }
+
+  const lines = pool.map((q) => {
+    const userIdx = q.selectedOption;
+    const correctIdx = q.correctOption;
+    const userLetter = userIdx !== null && userIdx !== undefined ? String.fromCharCode(65 + userIdx) : null;
+    const correctLetter = String.fromCharCode(65 + correctIdx);
+    const userChoice = userIdx !== null && userIdx !== undefined ? q.options?.[userIdx] : "No option selected (unanswered)";
+    const correctChoice = q.options?.[correctIdx] || "";
+
+    // Find matching syllabus topic description if available
+    const matchedTopic = allBuiltInTopics.find(
+      (t) => q.prompt?.toLowerCase().includes(t.name.toLowerCase()) || correctChoice?.toLowerCase().includes(t.name.toLowerCase())
+    );
+    const extraInsight = matchedTopic
+      ? `Remember: **${matchedTopic.name}** — ${matchedTopic.description}`
+      : `The question specifically tests the core principle behind "${correctChoice.slice(0, 120)}".`;
+
+    if (q.isCorrect) {
+      return `✅ **Q${q.qNum}: ${q.prompt}**\n• **Your answer (${correctLetter})**: "${correctChoice}" — **Spot on!** ${extraInsight}`;
+    }
+
+    const whyWrong = userLetter
+      ? `Option **${userLetter}** ("${userChoice}") describes a different concept or distractor that does not satisfy what the prompt is asking.`
+      : `You didn't select an option before the quiz ended.`;
+
+    return `❌ **Q${q.qNum}: ${q.prompt}**\n• **What you picked**: ${userLetter ? `Option ${userLetter} — "${userChoice}"` : "Unanswered"}\n• **Why it went wrong**: ${whyWrong}\n• **Correct answer**: ✅ **Option ${correctLetter} — "${correctChoice}"**\n• **Explanation**: Option ${correctLetter} directly answers the prompt because ${correctChoice.charAt(0).toLowerCase() + correctChoice.slice(1).replace(/\.$/, "")}. ${extraInsight}`;
+  });
+
+  return lines.join("\n\n");
+}
+
+router.post("/chat", requireAuth, aiLimiter, async (req, res, next) => {
+  try {
+    const message = String(req.body?.message || "").trim().slice(0, 1500);
+    const mode = String(req.body?.mode || "general"); // "general" | "exam" | "review"
+    const attemptContext = req.body?.attemptContext || null;
+    if (!message) return res.status(400).json({ message: "Type a message for Chints first" });
+
+    // 1. STRICT EXAM MODE: When the user is taking a live quiz, ONLY allow calculator math!
+    if (mode === "exam" || attemptContext?.status === "in-progress") {
+      const calc = evaluateMathExpression(message);
+      if (calc) {
+        return res.json({
+          reply: `🧮 **Scientific Calculator Result:**\n\`${calc.expression} = ${calc.result}\`${calc.note ? `\n*(${calc.note})*` : ""}\n\nNeed another calculation? Toss any numbers, roots, trig, logs, or factorials here! You've got this test bro! 💪`,
+          mode: "exam"
+        });
+      }
+      return res.json({
+        reply: `Haha nice try bro! 😄🔒 Since you're taking a **live quiz** right now, I'm strictly in **Calculator-Only Mode** — I can't give answers, hints, or explanations until you submit!\n\n🧮 **Need to calculate something?** Send me any basic or scientific math expression like:\n• \`24 * 15 / 4\` or \`18% of 250\`\n• \`square root of 121\` or \`cbrt(27)\`\n• \`sin(30) + cos(60)\` or \`log2(1024)\`\n• \`5! + 10C3\` or \`gcd(48, 180)\`\n\nAs soon as you finish the test, I'll happily explain every question you missed! 💪`,
+        mode: "exam"
+      });
+    }
+
+    // 2. Always check if the user is asking for a quick math calculation even outside exam mode
+    const directCalc = evaluateMathExpression(message);
+
+    // 3. Instant friendly greetings & conversational responses (< 5ms, zero network delay!)
+    const lower = message.toLowerCase().trim();
+    const cleanWords = lower.replace(/[^a-z0-9\s]/g, "").trim();
+
+    if (/^(hi+|hey+|hello+|yo+|hola|sup|wassup|whats up|hii+|heyy+|bro+|hey bro|hi bro|hello chints|hi chints|hey chints|good morning|good afternoon|good evening)$/.test(cleanWords)) {
+      return res.json({
+        reply: `Heyyy bro! 👋😄 Great to see you! I'm **Chints**, your AI study partner and platform co-pilot!\n\nHere's what we can do right now:\n• 📚 **Add or browse subjects** (*"how do I add subjects?"*)\n• ✨ **Generate an AI quiz** (*"generate a quiz with Chints"*)\n• 🧮 **Calculate math** (*e.g. \`24 * 15\` or \`18% of 250\`*)\n• 📝 **Explain any topic or wrong quiz answer**\n\nWhat are we working on today? 🚀`,
+        source: "instant"
+      });
+    }
+
+    if (/^(how are you|how r u|how are u|hows it going|how is it going|what are you doing|who are you|what are you|what can you do)$/.test(cleanWords)) {
+      return res.json({
+        reply: `I'm doing awesome bro, thanks for asking! ⚡🤖 I'm **Chints AI** — built right into your right-hand side panel to help you master your subjects!\n\nI can:\n1. **Open any page or tool for you** (just ask *"add a subject"*, *"create a quiz"*, *"open profile"*, or *"change theme"*)\n2. **Sort messy college syllabi** into clean Units & Topics\n3. **Draft Easy, Medium, or Hard MCQs** on any topic\n4. **Act as a safe Calculator** while you're taking a live quiz\n5. **Explain every wrong answer** the moment you finish a test!\n\nTry asking me anything! 😊`,
+        source: "instant"
+      });
+    }
+
+    if (/^(thanks|thank you|thx|ty|tysm|thank u|gracias|cool|nice|awesome|great|perfect|okay|ok|got it)$/.test(cleanWords)) {
+      return res.json({
+        reply: `Anytime bro! 🙌 Happy to help! Let me know if you want to add a subject, generate a quiz, calculate something, or review a topic! ✨`,
+        source: "instant"
+      });
+    }
+
+    let action = null;
+
+    if (/\b(add|create|new|paste|upload)\b.*\b(subject|course|syllabus)\b|\bhow\b.*\badd\b.*\bsubject/i.test(lower)) {
+      action = { type: "navigate", path: "/subjects?add=1", label: "Opened Add Custom Subject" };
+      return res.json({
+        reply: `Got you bro! 🙌 I just opened **Subjects & Syllabus** and popped open the **Add a custom subject** form for you!\n\nHere's all you need to do:\n1. Type your **Subject name** (e.g., *Operating Systems* or *DSA*) and course code.\n2. Paste your **Syllabus text** — don't worry about the format, I'll automatically sort all the Units and Topics for you!\n3. Click **Create & enroll with Chints**.\n\nWould you like me to guide you on how to generate a clean AI quiz for your new subject once you add it? 😊`,
+        action
+      });
+    }
+
+    if (/\b(where|show|open|go to|browse|enroll)\b.*\b(subject|course|unit)/i.test(lower)) {
+      action = { type: "navigate", path: "/subjects", label: "Opened Subjects & Syllabus" };
+      return res.json({
+        reply: `Here you go! 📚 I just opened **Subjects & Syllabus** for you! From here you can:\n• Click **Open units** on any enrolled subject to study topics or take a quiz\n• Switch to the **Catalog** tab to enroll in more subjects\n• Click **+ Add custom subject** (top right) to paste your own syllabus!\n\nNeed help adding a subject or creating a quiz for one of these units?`,
+        action
+      });
+    }
+
+    if (/\b(generate|ai|chints)\b.*\b(quiz|question|test|mcq)/i.test(lower) || /\bhow\b.*\bgenerate\b/i.test(lower)) {
+      action = { type: "navigate", path: "/create?mode=ai", label: "Opened Chints AI Quiz Generator" };
+      return res.json({
+        reply: `Let's build an AI quiz together! ✨ I just opened **Quiz Studio (Chints AI Mode)** for you!\n\nJust follow these steps:\n1. Pick your **Subject** and **Unit** at the top.\n2. Choose your **Difficulty** (*Easy*, *Medium*, or *Hard*) and how many questions you want.\n3. Select the syllabus topics you want covered and click **Generate with Chints**!\n\nWant me to help you pick a topic or show you how to publish and share the quiz link after?`,
+        action
+      });
+    }
+
+    if (/\b(create|make|build|write)\b.*\b(quiz|test)\b/i.test(lower)) {
+      action = { type: "navigate", path: "/create?mode=manual", label: "Opened Quiz Builder" };
+      return res.json({
+        reply: `Awesome! ✍️ I just opened the **Quiz Studio** for you! You can write your own questions manually right here, or click **Use Chints AI** on the right panel if you want me to draft questions from your syllabus topics.\n\nDo you want to create a manual quiz or have me generate one for you?`,
+        action
+      });
+    }
+
+    if (/\b(delete|remove|edit|my quiz|published quiz)/i.test(lower)) {
+      action = { type: "navigate", path: "/my-quizzes", label: "Opened My Quizzes" };
+      return res.json({
+        reply: `I just opened **My Quizzes** for you! 🗂️\n\nTo **delete** any old or published quiz, just click the red **Delete** button on the right side of that quiz's row (you can also delete quizzes directly from any Unit page or Explore card!).\n\nNeed help editing or sharing a quiz?`,
+        action
+      });
+    }
+
+    if (/\b(profile|change name|change password|switch.*role|teacher account|student account|admin)/i.test(lower)) {
+      action = { type: "navigate", path: "/profile", label: "Opened My Profile" };
+      return res.json({
+        reply: `I just opened **My Profile** for you! 👤\n\nHere you can:\n• Check your academic stats (completed quizzes, average & best score)\n• Update your **Name** or **Email**\n• Switch your account role between **Student** and **Teacher (Admin)**\n• Change your **Password**\n\nAnything else you'd like me to open for you?`,
+        action
+      });
+    }
+
+    if (/\b(theme|dark mode|light mode|color|appearance|setting)/i.test(lower)) {
+      action = { type: "navigate", path: "/settings", label: "Opened Settings & Theme" };
+      return res.json({
+        reply: `I just opened **Settings & Theme** for you! 🎨 You can pick **Light**, **Dark**, or **Automatic** mode and choose your favorite accent color (*Indigo, Ocean, Emerald, Rose,* or *Amber*).\n\nHow does that look?`,
+        action
+      });
+    }
+
+    if (/\b(history|past attempt|my score|result|grade)/i.test(lower) && !attemptContext?.questions?.length) {
+      action = { type: "navigate", path: "/history", label: "Opened Attempt History" };
+      return res.json({
+        reply: `I just opened your **Attempt History**! 📊 Click **Review answers** on any finished quiz and I can explain every single question you got wrong and why!`,
+        action
+      });
+    }
+
+    if (/\b(about|guide|instruction|how to use|what is this)/i.test(lower)) {
+      action = { type: "navigate", path: "/about", label: "Opened About & Guide" };
+      return res.json({
+        reply: `I just opened the **About & Guide** page for you! 📖 It walks through every feature for both Students and Teachers. Or you can just ask me directly right here and I'll take you wherever you need to go!`,
+        action
+      });
+    }
+
+    // 4. POST-QUIZ REVIEW: If the user is viewing a completed attempt and asks why they were wrong / says "yes" / "explain"
+    if (attemptContext && attemptContext.status && attemptContext.status !== "in-progress" && Array.isArray(attemptContext.questions)) {
+      const qMatch = lower.match(/\bq(?:uestion)?\s*#?\s*(\d+)\b/i);
+      const wantsReview =
+        qMatch ||
+        /\b(yes|yeah|yep|sure|ok|okay|please|pls|explain|why|wrong|mistake|right answer|correct answer|review|breakdown|show me|help)\b/i.test(lower);
+
+      if (wantsReview) {
+        const targetQ = qMatch ? Number.parseInt(qMatch[1], 10) : null;
+        const breakdown = explainWrongQuestions(attemptContext.questions, targetQ);
+        return res.json({
+          reply: `Here is your personalized breakdown for **${attemptContext.quizTitle || "your quiz"}**:\n\n${breakdown}\n\nWant me to dive deeper into any specific question (e.g. *"explain Q2"*), or help you practice another quiz on these topics? 😊`,
+          mode: "review"
+        });
+      }
+    }
+
+    if (directCalc) {
+      return res.json({
+        reply: `🧮 **Scientific Calculation Result:**\n\`${directCalc.expression} = ${directCalc.result}\`${directCalc.note ? `\n*(${directCalc.note})*` : ""}\n\nAnything else I can calculate or help you with? 😊`
+      });
+    }
+
+    // 5. Fast local syllabus topic lookup BEFORE network call so topic questions reply instantaneously!
+    const matchedTopic = allBuiltInTopics.find((t) => lower.includes(t.name.toLowerCase()));
+    if (matchedTopic) {
+      return res.json({
+        reply: `Great question! 💡 **${matchedTopic.name}** (*${matchedTopic.subject} — ${matchedTopic.unit}*):\n\n${matchedTopic.description}\n\nWant me to open **Quiz Studio** so we can generate a practice quiz on **${matchedTopic.name}**? Just say *"generate a quiz"*! 🚀`,
+        source: "syllabus-engine"
+      });
+    }
+
+    // 6. Try Gemini with a fast 3.5s timeout for open-ended questions
+    const { key } = geminiConfig();
+    if (key) {
+      const systemPrompt = `You are Chints, a super friendly, enthusiastic, and supportive AI study buddy built into the Online Quiz System web app.
+Keep your tone warm, encouraging ("bro", "you got this!", friendly emojis), and concise (under 140 words unless explaining multiple questions).
+If the user asks how to use the app:
+- Subjects & Syllabus (#/subjects): enroll in courses or click "+ Add custom subject" to paste any syllabus.
+- Create Quiz (#/create): Manual mode or Chints AI mode (with Easy/Medium/Hard difficulty).
+- My Quizzes (#/my-quizzes): view, share, edit, or delete any quiz.
+- My Profile (#/profile): view stats, edit name/email, switch between Student & Teacher role, or change password.
+- Settings & Theme (#/settings): switch Light/Dark theme and accent colors.
+${attemptContext?.questions ? `The user just finished the quiz "${attemptContext.quizTitle}" with score ${attemptContext.score}/${attemptContext.totalQuestions}. Questions JSON: ${JSON.stringify(attemptContext.questions.slice(0, 15))}` : ""}
+User message: ${message}`;
+
+      try {
+        const reply = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }] }),
+          signal: AbortSignal.timeout(3_500)
+        });
+        if (reply.ok) {
+          const payload = await reply.json();
+          const text = payload?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("")?.trim();
+          if (text) return res.json({ reply: text, source: "gemini" });
+        }
+      } catch {
+        // Fall through immediately to fast local knowledge engine
+      }
+    }
+
+    // 7. Instant smart study & topic explainer for any custom concept
+    const cleanedConcept = message
+      .replace(/^(?:what is|what are|explain|define|tell me about|how does|how do|meaning of)\s+/i, "")
+      .replace(/[?.!]+$/, "")
+      .trim();
+
+    if (cleanedConcept.length >= 2 && cleanedConcept.length <= 90 && /\b(what|explain|define|tell me|how does|meaning|overview|summary)\b/i.test(lower)) {
+      const generatedDesc = describeTopic(cleanedConcept, "Computer Science & Engineering");
+      return res.json({
+        reply: `Here's a quick breakdown of **${cleanedConcept}**:\n\n💡 ${generatedDesc}\n\n**How to study this:**\n• Add it as a topic in **Quiz Studio** to generate Easy, Medium, or Hard practice MCQs!\n• Or ask me to *"generate a quiz with Chints"* and type **${cleanedConcept}** as a custom topic! 🚀`,
+        source: "syllabus-engine"
+      });
+    }
+
+    return res.json({
+      reply: `Hey bro! 👋 I'm right here to help! Here are things you can ask me anytime:\n\n• **"How do I add subjects?"** — I'll open the Add Custom Subject popup and sort your syllabus!\n• **"Generate a quiz with Chints"** — I'll open the AI Quiz Studio!\n• **"Delete a quiz"** — I'll open My Quizzes so you can remove old quizzes.\n• **"Open my profile"** or **"Change theme"** — I'll take you right there!\n• **"Explain [any topic]"** — e.g. *"Explain Doubly Linked List"* or *"Explain Deadlocks"*\n• **During a live test:** Send me any math expression (like \`24 * 15\` or \`18% of 250\`)!\n• **After a test:** Ask **"Why was I wrong?"** for a full breakdown! ✨`,
+      source: "instant"
+    });
+  } catch (error) { next(error); }
+});
+
+export function clampQuestionCount(value, min = 1, max = 25, fallback = 5) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+}
