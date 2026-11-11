@@ -66,4 +66,84 @@ export default function About() {
           oversee all quizzes and student results.
         </p>
         <div className="row" style={{ gap: 10 }}>
-// Stage 1
+          <button className="btn btn-primary" onClick={() => navigate("/subjects")}><Icon name="book" size={16} /> Go to subjects</button>
+          <button className="btn" onClick={() => navigate("/create?mode=ai")}><Icon name="sparkle" size={16} /> Try Chints</button>
+          <button className="btn" onClick={() => navigate("/settings")}><Icon name="palette" size={16} /> Appearance</button>
+        </div>
+      </section>
+
+      <section>
+        <div className="card-title"><h2>What it can do</h2></div>
+        <div className="grid-auto">
+          {features.map((feature) => (
+            <article key={feature.title} className="card card-pad about-feature">
+              <span className="stat-icon"><Icon name={feature.icon} /></span>
+              <h3>{feature.title}</h3>
+              <p className="text-muted">{feature.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="split even">
+        <article className="card card-pad">
+          <div className="card-title"><h3>How to use it — {isTeacher ? "Teacher" : "Student"}</h3></div>
+          <ol className="steps">
+            {(isTeacher ? teacherSteps : studentSteps).map(([head, body], i) => (
+              <li key={head}><span className="q-number">{i + 1}</span><div><b>{head}</b><p className="text-muted">{body}</p></div></li>
+            ))}
+          </ol>
+        </article>
+        <article className="card card-pad">
+          <div className="card-title"><h3>How to use it — {isTeacher ? "Student" : "Teacher"}</h3></div>
+          <ol className="steps">
+            {(isTeacher ? studentSteps : teacherSteps).map(([head, body], i) => (
+              <li key={head}><span className="q-number">{i + 1}</span><div><b>{head}</b><p className="text-muted">{body}</p></div></li>
+            ))}
+          </ol>
+        </article>
+      </section>
+
+      <section className="card card-pad">
+        <div className="card-title"><h2>Creating a quiz: manual vs Chints</h2></div>
+        <div className="split even">
+          <div>
+            <h3><Icon name="edit" size={18} /> Create quiz for this unit</h3>
+            <p className="text-muted">Opens Quiz Studio focused on writing questions yourself. Type each prompt and its options and tick the correct one. Chints is available on the side if you want extra ideas.</p>
+          </div>
+          <div>
+            <h3><Icon name="sparkle" size={18} /> Generate with Chints</h3>
+            <p className="text-muted">Opens Quiz Studio focused on AI generation: choose the topics, choose Easy, Medium or Hard, choose how many questions, and press Generate. Then review and edit the drafted questions before publishing.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="card card-pad">
+        <div className="card-title"><h2>What each menu item does</h2></div>
+        <dl className="guide">
+          {sidebarGuide.map(([name, text]) => (
+            <div key={name}><dt>{name}</dt><dd className="text-muted">{text}</dd></div>
+          ))}
+          {isTeacher && <div><dt>Teacher Console</dt><dd className="text-muted">All quizzes, student results, categories and user roles in one place.</dd></div>}
+        </dl>
+      </section>
+
+      <section className="card card-pad">
+        <div className="card-title"><h2>Frequently asked questions</h2></div>
+        <div className="faq">
+          {faqs.map(([question, answer]) => (
+            <details key={question}><summary>{question}</summary><p className="text-muted">{answer}</p></details>
+          ))}
+        </div>
+      </section>
+
+      <section className="card card-pad">
+        <div className="card-title"><h2>Built with</h2></div>
+        <div className="topic-tags">
+          {["React + Vite", "Node.js + Express", "MongoDB + Mongoose", "JWT authentication", "bcrypt password hashing", "Helmet security headers", "Google Gemini (Chints)"].map((tag) => <span key={tag} className="tag">{tag}</span>)}
+        </div>
+      </section>
+    </div>
+  );
+}
+
