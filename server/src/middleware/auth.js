@@ -3,6 +3,27 @@ import { createHash } from "node:crypto";
 import User from "../models/User.js";
 import RevokedToken from "../models/RevokedToken.js";
 
+async function resolveUserFromHeader(req) {
+  const match = String(req.get("authorization") || "").match(/^Bearer\s+(.+)$/i);
+  if (!match || !process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) return null;
+  const token = match[1];
+  const payload = jwt.verify(token, process.env.JWT_SECRET);
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  if (await RevokedToken.exists({ tokenHash })) return null;
+  const user = await User.findById(payload.sub).select("+tokenVersion");
+  if (!user || (payload.ver ?? 0) !== (user.tokenVersion || 0)) return null;
+  return user;
+}
+
+export async function optionalAuth(req, _res, next) {
+  try {
+    req.user = await resolveUserFromHeader(req);
+  } catch {
+    req.user = null;
+  }
+  next();
+}
+
 export async function requireAuth(req, res, next) {
   try {
     const match = String(req.get("authorization") || "").match(/^Bearer\s+(.+)$/i);

@@ -1,217 +1,183 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchCategories, fetchQuizzes, saveAttemptAnswers, startAttempt, submitAttempt } from "./api.js";
-import AuthPanel from "./AuthPanel.jsx";
-import AttemptPanel from "./AttemptPanel.jsx";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { logoutAccount, onUnauthorized, startAttempt } from "./api.js";
+import AuthPage from "./AuthPage.jsx";
+import Builder from "./Builder.jsx";
+import { SharedQuizPage } from "./components.jsx";
+import Dashboard from "./Dashboard.jsx";
+import Explore from "./Explore.jsx";
+import { AdminConsole, History, MyQuizzes } from "./Manage.jsx";
+import Player from "./Player.jsx";
+import { SubjectDetail, SubjectsList } from "./Subjects.jsx";
+import { AppContext, Icon, ToastProvider, initials, navigate, useRoute, useToast } from "./ui.jsx";
 
-const PAGE_SIZE = 9;
+const SESSION_KEY = "oqs_session_v1";
+const THEME_KEY = "oqs_theme_v1";
 
-function QuizCard({ quiz, signedIn, onStart, busy }) {
-  const difficulty = quiz.difficulty || "beginner";
+function loadSavedSession() {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.token && parsed?.user ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function Shell({ session, onSession, theme, onTheme }) {
+  const route = useRoute();
+  const toast = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [searchText, setSearchText] = useState(route.query.search || "");
+  const [startingQuizId, setStartingQuizId] = useState("");
+
+  useEffect(() => { setSidebarOpen(false); setUserMenuOpen(false); }, [route.path]);
+
+  const startQuiz = useCallback(async (quiz) => {
+    setStartingQuizId(quiz.id);
+    try {
+      const data = await startAttempt(quiz.id, session.token);
+      navigate(`/attempt/${data.attempt.id}`);
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setStartingQuizId("");
+    }
+  }, [session.token, toast]);
+
+  async function handleLogout() {
+    try { await logoutAccount(session.token); } catch { /* ignore */ }
+    onSession(null);
+  }
+
+  function submitTopSearch(event) {
+    event.preventDefault();
+    const q = searchText.trim();
+    navigate(q ? `/explore?search=${encodeURIComponent(q)}` : "/explore");
+  }
+
+  const ctx = useMemo(() => ({
+    token: session.token,
+    user: session.user,
+    startQuiz,
+    startingQuizId
+  }), [session, startQuiz, startingQuizId]);
+
+  const seg = route.segments;
+  let content;
+  if (seg[0] === "explore") content = <Explore />;
+  else if (seg[0] === "subjects" && seg[1] && seg[2] === "unit") content = <SubjectDetail subjectKey={seg[1]} unitIndex={Number(seg[3] || 0)} />;
+  else if (seg[0] === "subjects" && seg[1]) content = <SubjectDetail subjectKey={seg[1]} />;
+  else if (seg[0] === "subjects") content = <SubjectsList />;
+  else if (seg[0] === "create") content = <Builder />;
+  else if (seg[0] === "edit" && seg[1]) content = <Builder editQuizId={seg[1]} />;
+  else if (seg[0] === "my-quizzes") content = <MyQuizzes />;
+  else if (seg[0] === "history") content = <History />;
+  else if (seg[0] === "admin") content = <AdminConsole />;
+  else if (seg[0] === "quiz" && seg[1]) content = <SharedQuizPage quizId={seg[1]} />;
+  else if (seg[0] === "attempt" && seg[1]) content = <Player attemptId={seg[1]} />;
+  else content = <Dashboard />;
+
+  const active = seg[0] || "dashboard";
+
   return (
-    <article className="quiz-card">
-      <div className="card-topline">
-        <span className="category-pill">{quiz.category?.name || "General"}</span>
-        <span className={`difficulty difficulty-${difficulty}`}>{difficulty}</span>
+    <AppContext.Provider value={ctx}>
+      <div className="shell">
+        {sidebarOpen && <div className="scrim" onClick={() => setSidebarOpen(false)} />}
+        <aside className={sidebarOpen ? "sidebar open" : "sidebar"}>
+          <a className="brand" href="#/"><span className="brand-mark">Q</span> Online Quiz System</a>
+
+          <div className="nav-group">
+            <span className="nav-label">Learn</span>
+            <button className={active === "dashboard" ? "nav-link active" : "nav-link"} onClick={() => navigate("/")}><Icon name="home" /> Dashboard</button>
+            <button className={active === "subjects" ? "nav-link active" : "nav-link"} onClick={() => navigate("/subjects")}><Icon name="book" /> Subjects & Units</button>
+            <button className={active === "explore" ? "nav-link active" : "nav-link"} onClick={() => navigate("/explore")}><Icon name="compass" /> Explore Catalog</button>
+            <button className={active === "history" ? "nav-link active" : "nav-link"} onClick={() => navigate("/history")}><Icon name="history" /> Attempt History</button>
+          </div>
+
+          <div className="nav-group">
+            <span className="nav-label">Authoring</span>
+            <button className={active === "create" ? "nav-link active" : "nav-link"} onClick={() => navigate("/create")}><Icon name="plus" /> Create Quiz</button>
+            <button className={active === "my-quizzes" || active === "edit" ? "nav-link active" : "nav-link"} onClick={() => navigate("/my-quizzes")}><Icon name="edit" /> My Quizzes</button>
+          </div>
+
+          {session.user.role === "admin" && (
+            <div className="nav-group">
+              <span className="nav-label">Teacher / Admin</span>
+              <button className={active === "admin" ? "nav-link active" : "nav-link"} onClick={() => navigate("/admin")}><Icon name="shield" /> Teacher Console</button>
+            </div>
+          )}
+
+          <div className="sidebar-foot">
+            <strong><Icon name="sparkle" size={14} /> Powered by Chints AI</strong>
+            <span>Draft MCQs & parse syllabi for any course unit with Chints.</span>
+          </div>
+        </aside>
+
+        <div className="main">
+          <header className="topbar">
+            <button type="button" className="icon-button menu-button" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Icon name="menu" /></button>
+            <form className="top-search" onSubmit={submitTopSearch}>
+              <Icon name="search" size={18} />
+              <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search quizzes across all topics…" maxLength={100} />
+            </form>
+            <div className="top-actions">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate("/create")}><Icon name="plus" size={15} /> New quiz</button>
+              <button type="button" className="icon-button" onClick={onTheme} aria-label="Toggle theme" title="Toggle light/dark theme">
+                <Icon name={theme === "dark" ? "sun" : "moon"} />
+              </button>
+              <div className="user-menu">
+                <button type="button" className="user-chip" onClick={() => setUserMenuOpen((v) => !v)}>
+                  <span className="avatar">{initials(session.user.name)}</span>
+                  <span>
+                    <b>{session.user.name}</b>
+                    <small>{session.user.role === "admin" ? "Teacher (Admin)" : "Student"}</small>
+                  </span>
+                  <Icon name="chevron" size={16} />
+                </button>
+                {userMenuOpen && (
+                  <div className="popover">
+                    <button type="button" onClick={() => navigate("/my-quizzes")}><Icon name="edit" size={16} /> My quizzes</button>
+                    <button type="button" onClick={() => navigate("/history")}><Icon name="history" size={16} /> My attempts</button>
+                    {session.user.role === "admin" && <button type="button" onClick={() => navigate("/admin")}><Icon name="shield" size={16} /> Admin console</button>}
+                    <button type="button" onClick={handleLogout} style={{ color: "var(--danger)" }}><Icon name="logout" size={16} /> Sign out</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+          {content}
+        </div>
       </div>
-      <h2>{quiz.title}</h2>
-      <p className="quiz-description">{quiz.description || "Test your knowledge with this quiz."}</p>
-      <div className="quiz-meta">
-        <span><span aria-hidden="true">◷</span> {quiz.durationMinutes} min</span>
-        <span><span aria-hidden="true">▤</span> {quiz.totalQuestions} questions</span>
-      </div>
-      <button className="start-button" type="button" disabled={!signedIn || busy} onClick={() => onStart(quiz)} title={!signedIn ? "Sign in to start this quiz" : "Start a timed quiz attempt"}>
-        {busy ? "Starting…" : signedIn ? "Start quiz" : "Sign in to start"} <span aria-hidden="true">→</span>
-      </button>
-    </article>
+    </AppContext.Provider>
   );
 }
 
 export default function App() {
-  const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [catalog, setCatalog] = useState({ quizzes: [], pagination: { page: 1, pages: 0, total: 0 } });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [session, setSession] = useState(null);
-  const [activeAttempt, setActiveAttempt] = useState(null);
-  const [attemptBusy, setAttemptBusy] = useState(false);
-  const [attemptError, setAttemptError] = useState("");
-  const [saveState, setSaveState] = useState("");
-  const saveTimer = useRef(null);
-  const submitLock = useRef(false);
+  const [session, setSessionState] = useState(loadSavedSession);
+  const [theme, setTheme] = useState(() => window.localStorage.getItem(THEME_KEY) || "light");
 
-  useEffect(() => () => window.clearTimeout(saveTimer.current), []);
-  useEffect(() => {
-    if (!session) {
-      window.clearTimeout(saveTimer.current);
-      setActiveAttempt(null);
-    }
-  }, [session]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchCategories(controller.signal)
-      .then((data) => setCategories(data.categories || []))
-      .catch((err) => { if (err.name !== "AbortError") setError(err.message); });
-    return () => controller.abort();
+  const setSession = useCallback((next) => {
+    setSessionState(next);
+    if (next) window.localStorage.setItem(SESSION_KEY, JSON.stringify(next));
+    else window.localStorage.removeItem(SESSION_KEY);
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    fetchQuizzes({ category, search, page, limit: PAGE_SIZE }, controller.signal)
-      .then(setCatalog)
-      .catch((err) => { if (err.name !== "AbortError") setError(err.message); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  }, [category, search, page]);
+    onUnauthorized(() => setSession(null));
+  }, [setSession]);
 
-  const activeCategoryName = useMemo(
-    () => categories.find((item) => item.slug === category)?.name,
-    [categories, category]
-  );
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    window.localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
 
-  function submitSearch(event) {
-    event.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
-  }
-
-  function selectCategory(slug) {
-    setCategory(slug);
-    setPage(1);
-  }
-
-  async function beginAttempt(quiz) {
-    if (!session || attemptBusy) return;
-    setAttemptBusy(true);
-    setAttemptError("");
-    setSaveState("");
-    submitLock.current = false;
-    try {
-      const data = await startAttempt(quiz.id, session.token);
-      setActiveAttempt(data.attempt);
-    } catch (err) {
-      setAttemptError(err.message);
-    } finally {
-      setAttemptBusy(false);
-    }
-  }
-
-  function changeAnswer(questionId, selectedOption) {
-    if (!activeAttempt || activeAttempt.status !== "in-progress") return;
-    const questions = activeAttempt.questions.map((question) => question.id === questionId ? { ...question, selectedOption } : question);
-    const updatedAttempt = { ...activeAttempt, questions };
-    setActiveAttempt(updatedAttempt);
-    setSaveState("Saving answers…");
-    setAttemptError("");
-    window.clearTimeout(saveTimer.current);
-    const answers = questions.map((question) => ({ questionId: question.id, selectedOption: question.selectedOption }));
-    saveTimer.current = window.setTimeout(async () => {
-      try {
-        await saveAttemptAnswers(updatedAttempt.id, answers, session.token);
-        setSaveState("Answers saved");
-      } catch (err) {
-        setSaveState("");
-        setAttemptError(err.message);
-      }
-    }, 350);
-  }
-
-  async function handleSubmit(timedOut = false) {
-    if (!activeAttempt || activeAttempt.status !== "in-progress" || submitLock.current) return;
-    if (!timedOut && activeAttempt.questions.some((question) => question.selectedOption === null)) {
-      setAttemptError("Answer every question before submitting.");
-      return;
-    }
-    submitLock.current = true;
-    window.clearTimeout(saveTimer.current);
-    setAttemptBusy(true);
-    setAttemptError("");
-    setSaveState("");
-    try {
-      const answers = activeAttempt.questions.map((question) => ({ questionId: question.id, selectedOption: question.selectedOption }));
-      const data = await submitAttempt(activeAttempt.id, answers, session.token);
-      setActiveAttempt(data.attempt);
-      setSaveState("");
-    } catch (err) {
-      setAttemptError(err.message);
-      submitLock.current = false;
-    } finally {
-      setAttemptBusy(false);
-    }
-  }
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   return (
-    <main className="page-shell">
-      <header className="site-header">
-        <a className="brand" href="/" aria-label="Online Quiz System home"><span className="brand-mark">Q</span> Online Quiz System</a>
-        <div className="header-actions"><span className="header-note">Learn something new today</span><AuthPanel session={session} onSessionChange={setSession} /></div>
-      </header>
-
-      {activeAttempt && <AttemptPanel
-        attempt={activeAttempt}
-        busy={attemptBusy}
-        saveState={saveState}
-        error={attemptError}
-        onAnswerChange={changeAnswer}
-        onSubmit={handleSubmit}
-        onClose={() => { setActiveAttempt(null); setAttemptError(""); setSaveState(""); }}
-      />}
-
-      <section className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">YOUR NEXT CHALLENGE STARTS HERE</p>
-          <h1>Curiosity looks<br /><span>good on you.</span></h1>
-          <p className="hero-description">Explore topics, test what you know, and discover what you can learn next.</p>
-          <form className="search-form" onSubmit={submitSearch}>
-            <label className="sr-only" htmlFor="quiz-search">Search quizzes</label>
-            <span aria-hidden="true" className="search-icon">⌕</span>
-            <input id="quiz-search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Search topics or quizzes..." maxLength={100} />
-            <button type="submit">Search</button>
-          </form>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="orbit orbit-one"></div><div className="orbit orbit-two"></div>
-          <div className="floating-card card-book">✦ <span>Keep exploring</span></div>
-          <div className="hero-bubble"><span>Q</span></div>
-          <div className="floating-card card-score"><strong>+1</strong><span>New thing learned</span></div>
-        </div>
-      </section>
-
-      <section className="catalog-section" aria-labelledby="catalog-heading">
-        <div className="section-heading">
-          <div><p className="eyebrow">THE LIBRARY</p><h2 id="catalog-heading">Find your next <span>quiz.</span></h2></div>
-          <p className="result-count">{catalog.pagination.total || 0} quizzes to explore</p>
-        </div>
-
-        <div className="category-list" aria-label="Filter quizzes by category">
-          <button className={!category ? "category-filter active" : "category-filter"} onClick={() => selectCategory("")} type="button">All topics</button>
-          {categories.map((item) => (
-            <button key={item.id} className={category === item.slug ? "category-filter active" : "category-filter"} onClick={() => selectCategory(item.slug)} type="button">
-              {item.name}
-            </button>
-          ))}
-        </div>
-
-        {activeCategoryName && <p className="filter-summary">Showing quizzes in <strong>{activeCategoryName}</strong></p>}
-        {error && <div className="notice error-notice" role="alert"><strong>We couldn’t load the quiz library.</strong><span>{error}</span><button onClick={() => { setError(""); setPage(1); setSearch(search); }} type="button">Try again</button></div>}
-        {loading ? <div className="empty-state" role="status"><span className="loader"></span><p>Finding your next challenge…</p></div> :
-          !error && catalog.quizzes.length === 0 ? <div className="empty-state"><span className="empty-icon">⌕</span><h3>No quizzes found</h3><p>Try another search or choose a different topic.</p><button className="text-button" onClick={() => { setCategory(""); setSearch(""); setSearchInput(""); setPage(1); }} type="button">Clear filters</button></div> :
-          !error && <div className="quiz-grid">{catalog.quizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} signedIn={Boolean(session)} busy={attemptBusy} onStart={beginAttempt} />)}</div>
-        }
-
-        {!loading && !error && catalog.pagination.pages > 1 && <nav className="pagination" aria-label="Quiz pages">
-          <button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>← Previous</button>
-          <span>Page {page} of {catalog.pagination.pages}</span>
-          <button type="button" disabled={page >= catalog.pagination.pages} onClick={() => setPage((value) => value + 1)}>Next →</button>
-        </nav>}
-      </section>
-      <footer className="site-footer"><a className="brand" href="/"><span className="brand-mark">Q</span> Online Quiz System</a><span>Small steps. Big discoveries.</span></footer>
-    </main>
+    <ToastProvider>
+      {session ? <Shell session={session} onSession={setSession} theme={theme} onTheme={toggleTheme} /> : <AuthPage onSession={setSession} theme={theme} onTheme={toggleTheme} />}
+    </ToastProvider>
   );
 }

@@ -20,6 +20,9 @@ const quizSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true, minlength: 2, maxlength: 160 },
   description: { type: String, trim: true, maxlength: 2000, default: "" },
   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true, index: true },
+  subjectKey: { type: String, trim: true, maxlength: 80, default: null, index: true },
+  unitIndex: { type: Number, min: 0, max: 39, default: null },
+  source: { type: String, enum: ["manual", "ai"], default: "manual" },
   difficulty: { type: String, enum: ["easy", "medium", "hard", "beginner", "intermediate", "advanced"], default: "beginner", required: true },
   durationMinutes: { type: Number, required: true, min: 1, max: 600, default: 15 },
   totalQuestions: { type: Number, required: true, min: 0, default: 0 },
@@ -32,5 +35,7 @@ const quizSchema = new mongoose.Schema({
 quizSchema.index({ isPublished: 1, publishedAt: -1 });
 quizSchema.index({ isPublished: 1, category: 1, publishedAt: -1, _id: 1 });
 quizSchema.index({ isPublished: 1, difficulty: 1, publishedAt: -1, _id: 1 });
+quizSchema.index({ isPublished: 1, subjectKey: 1, unitIndex: 1, publishedAt: -1 });
+quizSchema.index({ createdBy: 1, updatedAt: -1 });
 quizSchema.index({ title: "text", description: "text" });
 export default mongoose.model("Quiz", quizSchema);
