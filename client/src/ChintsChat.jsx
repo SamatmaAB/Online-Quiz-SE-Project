@@ -449,4 +449,273 @@ export default function ChintsChat({ tucked, onToggleTuck }) {
         <div className="chints-cat-stage">
           <ChintsCat
             breed={catBreed}
-// Stage 2
+            size={88}
+            woolTrigger={woolTrigger}
+            napRequest={manualNap}
+            onStatusText={setCatStatusText}
+            onClick={tossWoolBall}
+          />
+          <div className="chints-cat-stage-info">
+            <b>
+              {catStatusText || (isExamMode ? "🧮 Scientific Calculator Mode" : "👀 Watching your cursor!")}
+            </b>
+            <small>Move your cursor near Chints to play, or click below:</small>
+            <div className="row" style={{ gap: 5, marginTop: 5, flexWrap: "wrap" }}>
+              <button type="button" className="chints-mini-btn" onClick={tossWoolBall} title="Toss a wool ball for Chints">
+                🧶 Wool ball
+              </button>
+              <button type="button" className="chints-mini-btn" onClick={cycleCatBreed} title="Switch cat breed (6 styles)">
+                🐱 Switch cat
+              </button>
+              <button type="button" className="chints-mini-btn" onClick={() => setManualNap((v) => !v)} title="Toggle cat loaf nap (also sleeps automatically after 5 min idle)">
+                {manualNap ? "☀️ Wake" : "💤 Nap"}
+              </button>
+              <button
+                type="button"
+                className={showCalc || isExamMode ? "chints-mini-btn active" : "chints-mini-btn"}
+                onClick={() => setShowCalc((v) => !v)}
+                title="Open Scientific Calculator pad"
+              >
+                🧮 Sci Calc
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Context Bar */}
+        <div className="chints-context-bar">
+          <span>{contextLabel}</span>
+          <button
+            type="button"
+            className="link-button"
+            style={{ fontSize: 11.5 }}
+            onClick={() => setShowHistory((v) => !v)}
+          >
+            {showHistory ? "← Back to chat" : savedThreads.length > 0 ? `History (${savedThreads.length})` : "History"}
+          </button>
+        </div>
+
+        {/* Exam Mode Integrity Notice */}
+        {isExamMode && (
+          <div className="chints-exam-banner">
+            🔒 <b>Live Test Mode:</b> Quiz answers &amp; hints are locked while your test is running! Use Chints as your <b>calculator</b> below.
+          </div>
+        )}
+
+        {/* Informative Guide & Cat Breed Picker Drawer */}
+        {showInfo && (
+          <div className="chints-drawer">
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <strong>🐱 Choose Chints Cat Style (6 Breeds)</strong>
+              <button type="button" className="link-button" onClick={() => setShowInfo(false)}>Close</button>
+            </div>
+            <div className="chints-cat-pills">
+              {Object.values(CAT_BREEDS).map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  className={catBreed === b.id ? "chints-chip active" : "chints-chip"}
+                  onClick={() => setCatBreed?.(b.id)}
+                >
+                  {b.name}
+                </button>
+              ))}
+            </div>
+            <strong style={{ marginTop: 4 }}>✨ Quick Actions</strong>
+            <div className="chints-info-grid">
+              <button type="button" className="chints-info-card" onClick={() => { setShowInfo(false); sendMessage("How do I add subjects?"); }}>
+                <b>📚 Add a Custom Subject</b>
+                <small>Opens Add Subject &amp; sorts your syllabus into Units &amp; Topics.</small>
+              </button>
+              <button type="button" className="chints-info-card" onClick={() => { setShowInfo(false); sendMessage("Generate a quiz with Chints"); }}>
+                <b>✨ Generate AI Quiz</b>
+                <small>Opens Quiz Studio in Chints AI mode (Easy / Medium / Hard).</small>
+              </button>
+              <button type="button" className="chints-info-card" onClick={() => { setShowInfo(false); sendMessage("How do I delete a quiz?"); }}>
+                <b>🗂️ Manage / Delete Quizzes</b>
+                <small>Opens My Quizzes to share, edit, or delete published quizzes.</small>
+              </button>
+              <button type="button" className="chints-info-card" onClick={() => { setShowInfo(false); sendMessage("Open my profile"); }}>
+                <b>👤 Profile &amp; Role Switcher</b>
+                <small>View stats or switch between Student &amp; Teacher (Admin).</small>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Chat History View */}
+        {showHistory ? (
+          <div className="chints-history-view">
+            <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
+              <strong>Saved Chats ({savedThreads.length})</strong>
+              <div className="row" style={{ gap: 6 }}>
+                {savedThreads.length > 0 && (
+                  <button type="button" className="btn btn-sm btn-danger" onClick={clearAllHistory} title="Delete all chat history">
+                    <Icon name="trash" size={13} /> Clear all
+                  </button>
+                )}
+                <button type="button" className="btn btn-sm btn-primary" onClick={startNewChat}>
+                  <Icon name="plus" size={13} /> New
+                </button>
+              </div>
+            </div>
+            {savedThreads.length === 0 ? (
+              <div className="chints-history-empty">
+                <p>No saved chats in history.</p>
+                <small className="text-muted">Once you send a message to Chints, your conversation will appear here.</small>
+              </div>
+            ) : (
+              <div className="chints-thread-list">
+                {savedThreads.map((t) => (
+                  <div
+                    key={t.id}
+                    className={t.id === activeThread.id ? "chints-thread-item active" : "chints-thread-item"}
+                  >
+                    <button
+                      type="button"
+                      className="chints-thread-select"
+                      onClick={() => { setActiveThreadId(t.id); setShowHistory(false); }}
+                    >
+                      <b>{t.title}</b>
+                      <small>
+                        {t.messages.length} {t.messages.length === 1 ? "message" : "messages"} · {new Date(t.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </small>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger chints-thread-del"
+                      onClick={() => deleteThread(t.id)}
+                      title="Delete this chat"
+                    >
+                      <Icon name="trash" size={14} /> Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Active Conversation Feed */
+          <div className="chints-feed" ref={feedRef}>
+            {messages.map((m) => (
+              <div key={m.id} className={m.sender === "user" ? "chints-msg user" : "chints-msg bot"}>
+                <div className="chints-msg-meta">
+                  <span>{m.sender === "user" ? "You" : "🐱 Chints"}</span>
+                  {m.time && <small>{new Date(m.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>}
+                </div>
+                <div className="chints-bubble">
+                  {renderFormattedText(m.text)}
+                  {m.actionLabel && (
+                    <div className="chints-action-pill">
+                      <Icon name="check" size={12} /> {m.actionLabel}
+                    </div>
+                  )}
+                </div>
+                {m.sender === "chints" && m.suggestions?.length > 0 && (
+                  <div className="chints-chips">
+                    {m.suggestions.map((s) => (
+                      <button key={s} type="button" className="chints-chip" disabled={busy} onClick={() => sendMessage(s)}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+            {busy && (
+              <div className="chints-msg bot">
+                <div className="chints-bubble chints-typing">🐾 Chints is typing…</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Scientific Calculator Pad (Always open in Exam Mode, or toggle via "🧮 Sci Calc") */}
+        {(isExamMode || showCalc) && (
+          <div className="chints-sci-calc">
+            <div className="row" style={{ justifyContent: "space-between", marginBottom: 4 }}>
+              <small style={{ fontWeight: 700, fontSize: 11, color: "var(--muted)" }}>
+                🧮 Scientific Calculator (DEG mode · supports English or math)
+              </small>
+              {!isExamMode && (
+                <button type="button" className="link-button" style={{ fontSize: 11 }} onClick={() => setShowCalc(false)}>
+                  Hide
+                </button>
+              )}
+            </div>
+            <div className="chints-calc-bar">
+              {[
+                { label: "√", val: "sqrt(" },
+                { label: "∛", val: "cbrt(" },
+                { label: "x²", val: "^2" },
+                { label: "xʸ", val: "^" },
+                { label: "sin", val: "sin(" },
+                { label: "cos", val: "cos(" },
+                { label: "tan", val: "tan(" },
+                { label: "log₁₀", val: "log10(" },
+                { label: "ln", val: "ln(" },
+                { label: "log₂", val: "log2(" },
+                { label: "n!", val: "!" },
+                { label: "nCr", val: "C" },
+                { label: "nPr", val: "P" },
+                { label: "gcd", val: "gcd(" },
+                { label: "lcm", val: "lcm(" },
+                { label: "π", val: "pi" },
+                { label: "e", val: "e" },
+                { label: "% of", val: "% of " },
+                { label: "mod", val: " mod " },
+                { label: "(", val: "(" },
+                { label: ")", val: ")" },
+                { label: "+", val: " + " },
+                { label: "−", val: " - " },
+                { label: "×", val: " * " },
+                { label: "÷", val: " / " }
+              ].map((op) => (
+                <button
+                  key={op.label}
+                  type="button"
+                  className="chints-calc-btn"
+                  onClick={() => setInput((curr) => `${curr}${op.val}`)}
+                >
+                  {op.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="chints-calc-btn"
+                onClick={() => setInput("")}
+                title="Clear input"
+              >
+                CLR
+              </button>
+              <button
+                type="button"
+                className="chints-calc-btn eq"
+                disabled={!input.trim() || busy}
+                onClick={() => sendMessage(input)}
+                title="Evaluate expression"
+              >
+                =
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Input Box with High-Contrast Readable Text */}
+        <form className="chints-input-row" onSubmit={handleSubmit}>
+          <input
+            className="input chints-text-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={isExamMode ? "Calculate e.g. 24 * 15 or 18% of 250…" : "Ask Chints the cat anything…"}
+            maxLength={500}
+          />
+          <button type="submit" className="btn btn-primary btn-sm chints-send" disabled={busy || !input.trim()} title="Send message">
+            <Icon name="arrowRight" size={15} />
+          </button>
+        </form>
+      </aside>
+    </>
+  );
+}
+export { TUCKED_KEY };
