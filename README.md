@@ -80,3 +80,32 @@ The client includes a responsive searchable quiz catalog, category filters, time
 ## Checks
 
 Run API helper tests with `npm --prefix server test` and build the client with `npm --prefix client run build`.
+
+### Subjects & Custom Syllabus Management (Sprint 3)
+
+- `GET /api/subjects` returns all 5 built-in courses (`SE`, `UIUX`, `KOTLIN`, `DBMS`, `ML`), user-uploaded custom subjects, and the current user's enrolled subject keys.
+- `GET /api/subjects/:subjectKey` returns the 4 unit definitions, syllabus topics, and visible unit-specific quizzes.
+- `POST /api/subjects/enroll` and `POST /api/subjects/leave` manage course enrollment for the signed-in student or teacher.
+- `POST /api/subjects/custom` parses raw syllabus text into structured units using Chints and creates a custom course.
+
+### Chints AI Question Generator Studio (Sprint 3)
+
+- `POST /api/ai/generate-questions` generates multiple-choice questions for a given `subjectKey`, `unitIndex`, `topicFocus`, `difficulty`, and `count`.
+- Uses Google Gemini (`gemini-3.8-flash`) when `GEMINI_API_KEY` is configured in `server/.env`, and automatically falls back to the deterministic syllabus-aware Chints engine when offline.
+
+### Student vs. Teacher (Admin) Roles & Account-Scoped Privacy
+
+- During registration (`POST /api/auth/register`), users can select **Student** (`role: "user"`) or **Teacher** (`role: "admin"`).
+- Student-generated quizzes remain private to the creator's own account in catalog and unit listings.
+- Teachers (`role: "admin"`) have full global visibility across all student-created and teacher-created quizzes.
+
+### Shareable Test Links & Teacher Console
+
+- Every published quiz includes a one-click **Share** action that copies a direct test link (`#/quiz/<quizId>`).
+- Opening `#/quiz/<quizId>` loads the dedicated Shared Quiz landing page so students can immediately start a timed attempt.
+- Teachers can monitor all published quizzes, student creators, and attempt scores from the **Teacher Console** (`GET /api/admin/overview`).
+
+### Testing, Coverage & E2E Smoke Suite
+
+- **Unit Tests & Coverage**: `npm --prefix server test` (or `node --test --experimental-test-coverage` inside `server/`).
+- **End-to-End Smoke Suite**: `node server/scripts/smoke.js` (executes 25 live API assertions across Auth, Subjects, Chints AI, Privacy, Share Links, and Timed Attempts).

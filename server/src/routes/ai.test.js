@@ -35,3 +35,12 @@ test("chintsFallbackQuestions drafts valid MCQs from syllabus topics when offlin
     assert.equal(q.correctOption >= 0 && q.correctOption < 4, true);
   }
 });
+
+import { clampQuestionCount } from "./ai.js";
+
+test("clampQuestionCount bounds requested question counts between min and max", () => {
+  assert.equal(clampQuestionCount(10), 10);
+  assert.equal(clampQuestionCount(0), 1);
+  assert.equal(clampQuestionCount(99), 25);
+  assert.equal(clampQuestionCount("invalid", 1, 25, 5), 5);
+});

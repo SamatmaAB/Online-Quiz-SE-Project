@@ -76,3 +76,13 @@ All 22 test cases were executed against the integrated MERN + Chints AI system o
 ## 4. Conclusion
 
 All **22/22** functional, security, and Sprint-3 test cases executed and **Passed** with zero defects. Detailed automated unit test logs, system validation traces, line coverage, and branch coverage metrics are archived in the `docs/` folder.
+
+| UT-24 | `countSyllabusTopics` sums topic arrays across units | Parsed syllabus array | Returns total topic count (`3`) and `0` for null/empty | Pass |
+| UT-25 | `normalizeDifficulty` normalizes case and falls back to `medium` | `"EASY"`, `"unknown"` | Returns `"easy"` and `"medium"` | Pass |
+| UT-26 | `computeGradeLetter` maps score percentages to grade letters | `95, 82, 74, 61, 50, 40` | Returns `S, A, B, C, D, F` | Pass |
+| UT-27 | `parsePagination` and `normalizeSearch` validate query params | `page=2, limit=10`, regex input | Returns `{page:2,limit:10,skip:10}` and escaped string | Pass |
+| UT-28 | `summarizeCatalogQuizzes` counts `chints` vs `manual` quizzes | Mixed quiz array | Returns `{total:2, chintsCount:1, manualCount:1}` | Pass |
+| UT-29 | `isBuiltInSubjectKey` & `CUSTOM_KEY_PATTERN` validate subject keys | `"SE"`, `"C65f..."` | Returns `true` for valid keys and `false` for invalid | Pass |
+| UT-30 | `extractBearerToken` and `requireAdmin` enforce RBAC | Bearer header, `user` vs `admin` | Extracts token; returns `403` for non-admin | Pass |
+| UT-31 | `clampQuestionCount` bounds requested AI question counts | `0, 10, 99` | Clamps to `1, 10, 25` | Pass |
+| UT-32 | `DEFAULT_SEED_SUBJECT_KEYS` freezes the 5 built-in course keys | Seed constant | Frozen array `["SE","UIUX","KOTLIN","DBMS","ML"]` | Pass |

@@ -23,3 +23,12 @@ test("parseSyllabus ignores blank lines and applies safe unit and topic limits",
   assert.equal(units.length, 40);
   assert.equal(units[0].topics.length, 30);
 });
+
+import { countSyllabusTopics } from "./subjects.js";
+
+test("countSyllabusTopics sums topic counts across parsed syllabus units", () => {
+  const units = parseSyllabus("Unit 1: Intro\n- A\n- B\nUnit 2: Next\n- C");
+  assert.equal(countSyllabusTopics(units), 3);
+  assert.equal(countSyllabusTopics([]), 0);
+  assert.equal(countSyllabusTopics(null), 0);
+});

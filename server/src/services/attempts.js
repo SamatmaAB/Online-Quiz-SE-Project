@@ -68,3 +68,13 @@ export async function finalizeExpiredAttempts(attempts, now = new Date()) {
     }
   }
 }
+
+export function computeGradeLetter(percentage) {
+  const pct = Number(percentage) || 0;
+  if (pct >= 90) return "S";
+  if (pct >= 80) return "A";
+  if (pct >= 70) return "B";
+  if (pct >= 60) return "C";
+  if (pct >= 50) return "D";
+  return "F";
+}

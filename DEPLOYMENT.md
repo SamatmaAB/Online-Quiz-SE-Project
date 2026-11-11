@@ -27,3 +27,10 @@ Set `VITE_API_BASE_URL` to the API project's origin, for example `https://quiz-a
 ## 3. Verify
 
 Open the client deployment and check that categories and quizzes load. Then test registration, sign-in, starting and submitting a quiz, and password reset if SMTP is configured. Keep credentials in Vercel's environment settings; do not commit secret values.
+
+## Sprint 3 Environment Variables (Chints AI & Auto-Seeding)
+
+When deploying the backend API, configure the following optional environment variables alongside `MONGODB_URI` and `JWT_SECRET`:
+
+- `GEMINI_API_KEY`: Enables live Gemini 3.8 Flash question generation and syllabus topic extraction in Chints AI Studio. If omitted, the server automatically uses the built-in offline syllabus fallback generator.
+- `GEMINI_MODEL`: Defaults to `gemini-3.8-flash`.

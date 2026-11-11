@@ -64,3 +64,9 @@ The automated end-to-end validation suite executes 25 live HTTP requests against
 - **NFR-02 (Reliability & Timer Integrity):** Expired in-progress attempts are automatically finalized and scored server-side via `finalizeExpiredAttempts()` bulk writes even if the client browser closes.
 - **NFR-03 (Usability & Responsiveness):** Full-width responsive sidebar shell supports desktop and mobile viewports plus persistent Light/Dark theme switching (`data-theme="light" | "dark"`).
 
+
+---
+
+## Regression Verification Summary
+
+All **35 unit tests** (`npm --prefix server test`) and **25 end-to-end API smoke assertions** (`node server/scripts/smoke.js`) pass with zero regressions following the Sprint 3/4 service and documentation additions.

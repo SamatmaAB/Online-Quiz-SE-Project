@@ -48,3 +48,9 @@ cd server
 node --test --experimental-test-coverage
 ```
 
+
+---
+
+## Expanded 8-Suite Coverage Summary
+
+With the addition of `catalog.test.js`, `subjectAccess.test.js`, `auth.test.js`, and `seedData.test.js`, the automated unit test runner now executes **8 test files (35 unit tests)** covering pagination, search sanitization, custom subject key validation, bearer token extraction, grade letter calculation, difficulty normalization, and Chints AI question generation.

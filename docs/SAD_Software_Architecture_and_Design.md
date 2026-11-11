@@ -159,3 +159,32 @@ In accordance with the project evaluation guidelines (*"Deviations from the init
 3. **Chints AI Question Generator with Dual-Mode Resilience (Sprint 3):** Integrated Google `gemini-3.8-flash` for live AI question generation and syllabus parsing, paired with a built-in syllabus fallback engine so demos succeed even on machines without an external API key.
 4. **Student vs. Teacher Role Selector & Shareable Test Links (Sprint 3):** Added explicit **Student** and **Teacher (Admin)** account selection at sign-up, account-private generated quizzes for students, full Teacher oversight, and one-click `#/quiz/:quizId` share links.
 
+
+---
+
+## 9. Component Responsibility Matrix
+
+| Layer | Module / File | Primary Responsibility |
+| :--- | :--- | :--- |
+| **Presentation** | `client/src/Subjects.jsx` | Course enrollment, unit exploration, and custom syllabus upload modal |
+| **Presentation** | `client/src/Builder.jsx` | Chints AI Studio prompt controls, question review, and quiz publishing |
+| **Presentation** | `client/src/Manage.jsx` | Personal quiz workspace (`MyQuizzes`), attempt review (`History`), and `TeacherConsole` |
+| **API Routing** | `server/src/routes/subjects.js` | Built-in/custom subject catalog, enrollment, and syllabus parsing endpoints |
+| **API Routing** | `server/src/routes/ai.js` | Live Gemini 3.8 Flash MCQ generation and deterministic syllabus fallback |
+| **Domain Service** | `server/src/services/catalog.js` | Pagination, regex-safe search normalization, and public quiz serialization |
+
+## 10. Security & Role-Based Access Control (RBAC) Matrix
+
+| Operation / Resource | Anonymous | Student (`user`) | Teacher (`admin`) |
+| :--- | :---: | :---: | :---: |
+| Browse Built-in Subjects & Admin Quizzes | Yes | Yes | Yes |
+| Open Shared Quiz Link (`#/quiz/:id`) | Preview | Take Timed Test | Take / Manage |
+| View Student-Created Quizzes in Catalog | No | Own Quizzes Only | All Accounts |
+| Generate Quizzes with Chints AI Studio | No | Yes | Yes |
+| Access Teacher Console (`/api/admin/overview`) | No | No (`403`) | Yes |
+
+## 11. Error Handling & Resilience Design
+
+1. **AI Provider Resilience**: `generateQuestionsWithChints()` enforces a 45-second `AbortSignal.timeout` on upstream Gemini calls and seamlessly falls back to `chintsFallbackQuestions()` on network errors or missing keys.
+2. **Idempotent Startup Seeding**: `ensureSeedData()` checks existing category/quiz counts before inserting starter records so restarts never duplicate seed data.
+3. **Expired Attempt Finalization**: `finalizeExpiredAttempts()` uses atomic MongoDB `bulkWrite` updates to prevent race conditions when grading timed-out attempts.

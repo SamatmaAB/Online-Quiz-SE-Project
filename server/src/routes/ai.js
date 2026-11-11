@@ -183,3 +183,9 @@ where correctOption is the zero-based index of the correct option.`;
 });
 
 export default router;
+
+export function clampQuestionCount(value, min = 1, max = 25, fallback = 5) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+}
