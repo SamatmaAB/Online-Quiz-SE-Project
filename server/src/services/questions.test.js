@@ -35,3 +35,12 @@ test("slugify normalizes category names into URL-safe slugs", () => {
   assert.equal(slugify(null), "");
 });
 
+
+import { normalizeDifficulty } from "./questions.js";
+
+test("normalizeDifficulty validates supported difficulty levels and falls back safely", () => {
+  assert.equal(normalizeDifficulty("EASY"), "easy");
+  assert.equal(normalizeDifficulty(" Hard "), "hard");
+  assert.equal(normalizeDifficulty("unknown", "medium"), "medium");
+  assert.equal(normalizeDifficulty(null), "medium");
+});
