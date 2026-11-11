@@ -38,3 +38,12 @@ In addition to unit branch testing, the E2E validation script (`server/scripts/s
 3. **Publish Guard Branch (`POST /api/quizzes`, `PUT /api/quizzes/:id`, `PATCH /api/quizzes/:id`):**
    - Rejects `isPublished: true` when `questions.length === 0` (`HTTP 400`/`409`), while allowing `isPublished: false` for empty drafts.
 
+
+---
+
+## Newly Covered Decision Branches
+
+- `normalizeDifficulty()`: valid difficulty vs. fallback branch (`100%`).
+- `computeGradeLetter()`: all 6 grade threshold branches (`S`, `A`, `B`, `C`, `D`, `F`) (`100%`).
+- `summarizeCatalogQuizzes()`: `chints` vs. `manual` source counter branches (`100%`).
+- `requireAdmin()`: admin pass-through vs. non-admin `403 Forbidden` branch (`100%`).
