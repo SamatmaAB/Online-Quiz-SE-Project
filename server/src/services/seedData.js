@@ -89,3 +89,5 @@ export async function ensureSeedData() {
   return { created, total: STARTER_QUIZZES.length };
 }
 
+
+export const DEFAULT_SEED_SUBJECT_KEYS = Object.freeze(["SE", "UIUX", "KOTLIN", "DBMS", "ML"]);
