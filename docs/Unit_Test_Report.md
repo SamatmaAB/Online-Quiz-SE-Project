@@ -83,3 +83,14 @@ Automated unit tests verify the core business logic, input validators, security 
 npm --prefix server test
 ```
 
+
+---
+
+## Additional Sprint 4 Unit Test Suites
+
+| Test Suite | File | Assertions | Status |
+| :--- | :--- | :--- | :--- |
+| **Catalog Service Suite** | `server/src/services/catalog.test.js` | `parsePagination`, `normalizeSearch`, `toPublicQuiz`, `summarizeCatalogQuizzes` | PASS |
+| **Subject Access Suite** | `server/src/services/subjectAccess.test.js` | `isBuiltInSubjectKey`, `CUSTOM_KEY_PATTERN`, `customView` | PASS |
+| **Auth Middleware Suite** | `server/src/middleware/auth.test.js` | `extractBearerToken`, `requireAdmin` (200 vs 403) | PASS |
+| **Seed Config Suite** | `server/src/services/seedData.test.js` | `DEFAULT_SEED_SUBJECT_KEYS` immutability and course list | PASS |
