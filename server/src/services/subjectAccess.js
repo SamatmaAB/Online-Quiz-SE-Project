@@ -21,3 +21,7 @@ export async function subjectForUser(subjectKey, userId) {
   return custom ? customView(custom) : null;
 }
 
+
+export function isBuiltInSubjectKey(key) {
+  return Boolean(key && Object.prototype.hasOwnProperty.call(builtInSubjects, String(key)));
+}
