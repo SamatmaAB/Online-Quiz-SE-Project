@@ -23,3 +23,8 @@ export function slugify(value) {
     .slice(0, 80);
 }
 
+
+export function normalizeDifficulty(value, fallback = "medium") {
+  const cleaned = String(value || "").trim().toLowerCase();
+  return difficulties.has(cleaned) ? cleaned : fallback;
+}
