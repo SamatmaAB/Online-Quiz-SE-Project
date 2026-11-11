@@ -172,3 +172,13 @@ In accordance with the project evaluation guidelines (*"Deviations from the init
 | **API Routing** | `server/src/routes/subjects.js` | Built-in/custom subject catalog, enrollment, and syllabus parsing endpoints |
 | **API Routing** | `server/src/routes/ai.js` | Live Gemini 3.8 Flash MCQ generation and deterministic syllabus fallback |
 | **Domain Service** | `server/src/services/catalog.js` | Pagination, regex-safe search normalization, and public quiz serialization |
+
+## 10. Security & Role-Based Access Control (RBAC) Matrix
+
+| Operation / Resource | Anonymous | Student (`user`) | Teacher (`admin`) |
+| :--- | :---: | :---: | :---: |
+| Browse Built-in Subjects & Admin Quizzes | Yes | Yes | Yes |
+| Open Shared Quiz Link (`#/quiz/:id`) | Preview | Take Timed Test | Take / Manage |
+| View Student-Created Quizzes in Catalog | No | Own Quizzes Only | All Accounts |
+| Generate Quizzes with Chints AI Studio | No | Yes | Yes |
+| Access Teacher Console (`/api/admin/overview`) | No | No (`403`) | Yes |
