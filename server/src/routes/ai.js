@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { requireAuth } from "../middleware/auth.js";
 import { MAX_QUESTIONS_PER_QUIZ, parseQuestion } from "../services/questions.js";
 import { builtInSubjects } from "../services/subjectAccess.js";
+import { describeTopic } from "../services/subjects.js";
 
 const router = Router();
 const aiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 15, standardHeaders: true, legacyHeaders: false, message: { message: "Chints is cooling down — wait a moment and try again" } });
@@ -21,7 +22,9 @@ for (const subject of Object.values(builtInSubjects)) {
 }
 
 function geminiConfig() {
-  return { key: process.env.GEMINI_API_KEY || "", model: process.env.GEMINI_MODEL || "gemini-3.8-flash" };
+  const raw = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = raw === "gemini-3.8-flash" ? "gemini-2.5-flash" : raw;
+  return { key: process.env.GEMINI_API_KEY || "", model };
 }
 
 /** Pulls a JSON array out of a model reply, tolerating markdown fences and stray prose. */
@@ -59,62 +62,126 @@ export function normalizeGenerated(items) {
 }
 
 /**
- * Chints built-in syllabus generator: crafts topic-specific MCQs using syllabus definitions
- * when a teammate runs the project without a GEMINI_API_KEY or when offline.
+ * Chints built-in syllabus generator: crafts topic-specific, difficulty-aware MCQs
+ * using syllabus definitions when a teammate runs the project without a GEMINI_API_KEY
+ * or when the remote Gemini service is temporarily busy/offline.
  */
-export function chintsFallbackQuestions(topics, count, context = "") {
+export function chintsFallbackQuestions(topics, count, context = "", difficulty = "medium") {
   const enriched = topics.map((t) => {
     const found = allBuiltInTopics.find((b) => b.name.toLowerCase() === t.name.toLowerCase());
-    const desc = (t.description && t.description !== "From the syllabus you added." ? t.description : found?.description) ||
-      `A key concept in ${context || "this course"} covering how ${t.name} is applied in practice.`;
+    const hasCustomDesc = t.description && t.description !== "From the syllabus you added.";
+    const desc = (hasCustomDesc ? t.description : found?.description) || describeTopic(t.name, context);
     return { name: t.name, description: desc };
   });
 
-  const distractorPool = [
-    ...enriched.map((e) => e.description),
+  const siblingDescriptions = enriched.map((e) => e.description);
+  const siblingNames = enriched.map((e) => e.name);
+
+  const backupDescriptions = [
     ...allBuiltInTopics.map((b) => b.description),
-    "An unrelated hardware interrupt mechanism that bypasses application logic.",
-    "A deprecated legacy protocol replaced by static file tables.",
-    "A purely visual styling rule with no impact on data or system behavior.",
-    "A manual compilation step that only runs during hardware cold boot."
+    "A static compile-time directive that eliminates runtime state transitions and dynamic allocation.",
+    "An unindexed sequential scan that requires full table traversal before returning any element.",
+    "A hardware-only bus arbitration signal that bypasses application data structures entirely.",
+    "A fixed-size register latch restricted to storing a single boolean flag at boot time."
   ];
 
-  const templates = [
-    (t) => ({
-      kind: "def",
-      prompt: `Which statement best describes "${t.name}"${context ? ` in ${context}` : ""}?`,
-      correct: t.description
-    }),
-    (t) => ({
-      kind: "term",
-      prompt: `Which concept is defined as: "${t.description.replace(/\.$/, "")}"?`,
-      correct: t.name
-    }),
-    (t) => ({
-      kind: "role",
-      prompt: `When working with ${t.name}, what is its primary purpose or characteristic?`,
-      correct: t.description
-    })
+  const backupNames = [
+    ...allBuiltInTopics.map((b) => b.name),
+    "Static Register Latch",
+    "Sequential Tape Buffer",
+    "Compile-Time Macro Table",
+    "Synchronous Bus Polling"
   ];
 
+  const templatesByDifficulty = {
+    easy: [
+      (t) => ({
+        kind: "def",
+        prompt: `Which statement best defines "${t.name}"${context ? ` in ${context}` : ""}?`,
+        correct: t.description
+      }),
+      (t) => ({
+        kind: "term",
+        prompt: `Which syllabus concept is described as: "${t.description.replace(/\.$/, "")}"?`,
+        correct: t.name
+      }),
+      (t) => ({
+        kind: "def",
+        prompt: `What is the primary purpose of ${t.name}${context ? ` in ${context}` : ""}?`,
+        correct: t.description
+      })
+    ],
+    medium: [
+      (t) => ({
+        kind: "def",
+        prompt: `When implementing or applying "${t.name}"${context ? ` (${context})` : ""}, which statement accurately characterizes its behavior?`,
+        correct: t.description
+      }),
+      (t) => ({
+        kind: "term",
+        prompt: `A developer needs a concept that matches the following specification: "${t.description.replace(/\.$/, "")}". Which topic should they use?`,
+        correct: t.name
+      }),
+      (t) => ({
+        kind: "def",
+        prompt: `How does "${t.name}" function within ${context || "software and system design"}?`,
+        correct: t.description
+      })
+    ],
+    hard: [
+      (t) => ({
+        kind: "def",
+        prompt: `During a system design review${context ? ` for ${context}` : ""}, why would an engineer choose "${t.name}" over alternative approaches?`,
+        correct: t.description
+      }),
+      (t) => ({
+        kind: "term",
+        prompt: `Consider an architecture requirement described by: "${t.description.replace(/\.$/, "")}". Which syllabus concept directly satisfies this requirement?`,
+        correct: t.name
+      }),
+      (t) => ({
+        kind: "def",
+        prompt: `Which technical property correctly distinguishes "${t.name}" from other concepts in ${context || "this unit"}?`,
+        correct: t.description
+      })
+    ]
+  };
+
+  const templates = templatesByDifficulty[difficulty] || templatesByDifficulty.medium;
   const results = [];
+
   for (let i = 0; i < count; i += 1) {
     const topic = enriched[i % enriched.length];
     const tpl = templates[i % templates.length](topic);
-    let distractors;
-    if (tpl.kind === "term") {
-      const otherNames = [
-        ...enriched.filter((e) => e.name !== topic.name).map((e) => e.name),
-        ...allBuiltInTopics.filter((b) => b.name !== topic.name).map((b) => b.name),
-        "Static Linker Table", "Kernel Page Fault", "Binary Latch Register"
-      ];
-      distractors = [...new Set(otherNames)].slice(i % 5, (i % 5) + 3);
-    } else {
-      distractors = [...new Set(distractorPool.filter((d) => d !== tpl.correct))].slice((i * 2) % 9, ((i * 2) % 9) + 3);
-    }
-    while (distractors.length < 3) distractors.push(`Option ${distractors.length + 2} for ${topic.name}`);
+    let distractors = [];
 
-    const correctOption = i % 4;
+    if (tpl.kind === "term") {
+      const candidates = [
+        ...siblingNames.filter((n) => n !== topic.name),
+        ...backupNames.filter((n) => n !== topic.name)
+      ];
+      const unique = [...new Set(candidates)];
+      for (let k = 0; k < unique.length && distractors.length < 3; k += 1) {
+        distractors.push(unique[(i * 2 + k) % unique.length]);
+      }
+      distractors = [...new Set(distractors)];
+    } else {
+      const candidates = [
+        ...siblingDescriptions.filter((d) => d !== tpl.correct),
+        ...backupDescriptions.filter((d) => d !== tpl.correct)
+      ];
+      const unique = [...new Set(candidates)];
+      for (let k = 0; k < unique.length && distractors.length < 3; k += 1) {
+        distractors.push(unique[(i * 2 + k) % unique.length]);
+      }
+      distractors = [...new Set(distractors)];
+    }
+
+    while (distractors.length < 3) {
+      distractors.push(`Alternative approach ${distractors.length + 1} unrelated to ${topic.name}`);
+    }
+
+    const correctOption = (i * 3 + 1) % 4;
     const options = [...distractors.slice(0, 3)];
     options.splice(correctOption, 0, tpl.correct.slice(0, 280));
     const validated = parseQuestion({
@@ -147,45 +214,26 @@ router.post("/generate-questions", requireAuth, aiLimiter, async (req, res, next
 
     if (key) {
       const topicLines = topics.map((topic) => `- ${topic.name}${topic.description ? `: ${topic.description}` : ""}`).join("\n");
+      const levelGuide = {
+        easy: "Easy: direct recall of definitions and basic facts; one obviously-wrong distractor is fine.",
+        medium: "Medium: test understanding and simple application; distractors should be plausible.",
+        hard: "Hard: test multi-step reasoning, edge cases, comparisons and scenario-based application; all distractors must be plausible."
+      }[difficulty];
       const prompt = `You are Chints, an academic quiz-authoring assistant. Generate exactly ${count} ${difficulty}-difficulty multiple-choice questions for a college-level quiz${context ? ` on "${context}"` : ""}, covering these topics:
 
 ${topicLines}
 
+${levelGuide}
 Spread the questions evenly across the topics. Each question needs exactly 4 options with exactly one correct answer. Questions must be factually accurate and unambiguous.
 Return ONLY a JSON array, with no other text and no markdown fences. Each element must look like:
 {"prompt": "...", "options": ["...", "...", "...", "..."], "correctOption": 0}
 where correctOption is the zero-based index of the correct option.`;
 
-      try {
-        const reply = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } }),
-          signal: AbortSignal.timeout(60_000)
-        });
-        if (reply.ok) {
-          const payload = await reply.json();
-          const text = payload?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") ?? "";
-          const items = extractJsonArray(text);
-          const questions = items ? normalizeGenerated(items).slice(0, Math.min(count, MAX_QUESTIONS_PER_QUIZ)) : [];
-          if (questions.length) {
-            return res.json({ questions, requested: count, agent: "Chints", source: "gemini" });
-          }
-        }
-      } catch {
-        // Fall through to Chints built-in syllabus generator if network/API is unreachable
-      }
-    }
-
-    const fallback = chintsFallbackQuestions(topics, count, context);
-    return res.json({ questions: fallback, requested: count, agent: "Chints", source: "syllabus-engine" });
-  } catch (error) { next(error); }
-});
-
-export default router;
-
-export function clampQuestionCount(value, min = 1, max = 25, fallback = 5) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed)) return fallback;
-  return Math.min(max, Math.max(min, parsed));
-}
+      const candidateModels = [...new Set([model, "gemini-2.5-flash", "gemini-2.0-flash"])];
+      for (const candidate of candidateModels) {
+        try {
+          const reply = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(candidate)}:generateContent?key=${encodeURIComponent(key)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } }),
+// Stage 1
