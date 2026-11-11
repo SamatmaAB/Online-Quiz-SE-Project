@@ -238,4 +238,146 @@ export function SubjectDetail({ subjectKey, unitIndex }) {
   if (!subject) return <div className="page"><Empty icon="book" title="Subject not found" action={<button className="btn" onClick={() => navigate("/subjects")}>Back to subjects</button>} /></div>;
 
   if (subject.status !== "enrolled") {
-// Stage 2
+    return (
+      <div className="page">
+        <BackLink to="/subjects">All subjects</BackLink>
+        <Empty icon="book" title={`Enroll in ${subject.name} to access its units`}
+          action={<button className="btn btn-primary" onClick={enrollNow}>Enroll in {subject.name}</button>}>
+          Once enrolled, you can browse every unit's syllabus topics, take unit quizzes, or create new quizzes for this course.
+        </Empty>
+      </div>
+    );
+  }
+
+  if (unitIndex !== null && unitIndex !== undefined) {
+    return <UnitDetail subject={subject} unitIndex={unitIndex} />;
+  }
+
+  return (
+    <div className="page">
+      <BackLink to="/subjects">All subjects</BackLink>
+      <PageHead eyebrow={`${subject.code || "COURSE"} · ${subject.courseType || "Syllabus"}`} title={subject.name}
+        subtitle={subject.description || `${subject.units?.length || 0} units — pick a unit to review topics, take a quiz, or build a new quiz.`}>
+        {subject.isCustom && (
+          <button className="btn" disabled={reparsing} onClick={reparse} title="Let Chints read your syllabus text again and rebuild the unit topics">
+            <Icon name="sparkle" size={16} /> {reparsing ? "Re-reading syllabus…" : "Re-split topics with Chints"}
+          </button>
+        )}
+        <button className="btn btn-primary" onClick={() => navigate(`/create?subject=${encodeURIComponent(subject.key)}&unit=0&mode=manual`)}>
+          <Icon name="plus" size={16} /> Create quiz for {subject.name}
+        </button>
+      </PageHead>
+
+      <div className="unit-list">
+        {(subject.units || []).map((unit, idx) => (
+          <button key={idx} type="button" className="card unit-card" onClick={() => navigate(`/subjects/${encodeURIComponent(subject.key)}/unit/${idx}`)}>
+            <div className="card-top" style={{ width: "100%" }}>
+              <span className="unit-number">U{idx + 1}</span>
+              <Badge>{unit.topics?.length || 0} {(unit.topics?.length || 0) === 1 ? "topic" : "topics"}</Badge>
+            </div>
+            <h3>{unit.name}</h3>
+            <div className="topic-tags">
+              {(unit.topics || []).slice(0, 6).map((t, i) => <span key={i} className="tag">{t.name}</span>)}
+              {(unit.topics?.length || 0) > 6 && <span className="tag">+{unit.topics.length - 6} more</span>}
+            </div>
+            <div className="card-foot" style={{ width: "100%", paddingTop: 6 }}>
+              <span className="text-muted" style={{ fontSize: 13 }}>Quizzes & syllabus</span>
+              <span style={{ color: "var(--primary)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>Open unit <Icon name="arrowRight" size={15} /></span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function UnitDetail({ subject, unitIndex }) {
+  const { token, user } = useApp();
+  const toast = useToast();
+  const unit = subject.units?.[unitIndex];
+  const [tab, setTab] = useState("quizzes");
+  const { data, loading, error, reload } = useAsync((signal) => fetchUnitQuizzes(subject.key, unitIndex, token, signal), [subject.key, unitIndex, token]);
+
+  if (!unit) return <div className="page"><Empty title="Unit not found" action={<button className="btn" onClick={() => navigate(`/subjects/${encodeURIComponent(subject.key)}`)}>Back to {subject.name}</button>} /></div>;
+  const quizzes = data?.quizzes || [];
+  const createUrl = `/create?subject=${encodeURIComponent(subject.key)}&unit=${unitIndex}`;
+  const topicCount = unit.topics?.length || 0;
+
+  async function removeQuiz(quiz) {
+    if (await confirmDeleteQuiz(quiz, token, toast)) reload();
+  }
+
+  return (
+    <div className="page">
+      <BackLink to={`/subjects/${encodeURIComponent(subject.key)}`}>{subject.name}</BackLink>
+      <PageHead eyebrow={`${subject.code || subject.name} · Unit ${unitIndex + 1}`} title={unit.name}
+        subtitle={`${topicCount} syllabus ${topicCount === 1 ? "topic" : "topics"} · ${quizzes.length} ${quizzes.length === 1 ? "quiz" : "quizzes"} (${user?.role === "admin" ? "all accounts" : "your account + starter quizzes"})`}>
+        <button className="btn" onClick={() => navigate(`${createUrl}&mode=ai`)} title="Pick topics and a difficulty, then let Chints draft the questions"><Icon name="sparkle" size={16} /> Generate with Chints</button>
+        <button className="btn btn-primary" onClick={() => navigate(`${createUrl}&mode=manual`)} title="Write the questions yourself"><Icon name="plus" size={16} /> Create quiz for this unit</button>
+      </PageHead>
+
+      <div className="toolbar">
+        <div className="tabs">
+          <button className={tab === "quizzes" ? "tab active" : "tab"} onClick={() => setTab("quizzes")}>Unit quizzes ({quizzes.length})</button>
+          <button className={tab === "topics" ? "tab active" : "tab"} onClick={() => setTab("topics")}>Syllabus topics ({topicCount})</button>
+        </div>
+      </div>
+
+      {tab === "quizzes" ? (
+        <>
+          <Alert kind="error">{error}</Alert>
+          {loading ? <Loading /> : quizzes.length === 0 ? (
+            <Empty icon="list" title="No quizzes for this unit yet"
+              action={<button className="btn btn-primary" onClick={() => navigate(`${createUrl}&mode=manual`)}><Icon name="plus" size={16} /> Create the first quiz</button>}>
+              Build a quiz manually or let Chints draft questions from this unit's syllabus topics.
+            </Empty>
+          ) : (
+            <div className="grid-auto">
+              {quizzes.map((quiz) => (
+                <QuizCard key={quiz.id} quiz={quiz} showStatus={quiz.isMine || user?.role === "admin"}>
+                  <div className="row" style={{ width: "100%", justifyContent: "space-between" }}>
+                    <QuizStartButton quiz={quiz} />
+                    <div className="row" style={{ gap: 6 }}>
+                      <button className="btn btn-sm" onClick={() => copyQuizShareLink(quiz, toast)} title="Copy link to share with students">
+                        <Icon name="share" size={14} /> Share
+                      </button>
+                      {(quiz.isMine || user?.role === "admin") && (
+                        <>
+                          <button className="btn btn-sm" onClick={() => navigate(`/edit/${quiz.id}`)}><Icon name="edit" size={14} /> Edit</button>
+                          <button className="btn btn-sm btn-danger" onClick={() => removeQuiz(quiz)} title="Delete this quiz"><Icon name="trash" size={14} /> Delete</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </QuizCard>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="grid-wide">
+          {(unit.topics || []).map((topic, idx) => (
+            <div key={idx} className="card card-pad" style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <span className="q-number">{idx + 1}</span>
+              <div>
+                <h3 style={{ fontSize: 16 }}>{topic.name}</h3>
+                <p className="text-muted" style={{ marginTop: 4, fontSize: 13.5 }}>{topic.description || "Core syllabus topic."}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuizStartButton({ quiz }) {
+  const { startQuiz, startingQuizId } = useApp();
+  const busy = startingQuizId === quiz.id;
+  return (
+    <button className="btn btn-primary" type="button" disabled={busy || !quiz.totalQuestions || !quiz.isPublished} onClick={() => startQuiz(quiz)}>
+      <Icon name="play" size={16} /> {busy ? "Starting…" : quiz.isPublished ? "Start quiz" : "Draft"}
+    </button>
+  );
+}
+
