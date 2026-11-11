@@ -233,4 +233,143 @@ export function describeTopic(topicName, unitName = "") {
   if (/memory allocation|pointer|review of c/i.test(lower)) {
     return `Foundational systems programming concept (${name}) governing stack vs. heap layout, pointers, and runtime memory management.`;
   }
-// Stage 2
+  if (/tree|bst|avl|heap|trie/i.test(lower)) {
+    return `Hierarchical non-linear data structure (${name}) supporting logarithmic search, traversal orders, and balanced updates.`;
+  }
+  if (/graph|bfs|dfs|dijkstra|spanning/i.test(lower)) {
+    return `Vertex-and-edge network representation (${name}) for modeling connectivity, traversal paths, and shortest-path optimization.`;
+  }
+  if (/hash|skip list|sparse matrix|dictionary/i.test(lower)) {
+    return `Space- and time-efficient indexing structure (${name}) designed for fast key lookup and compact representation.`;
+  }
+  if (/html|css|dom|web|http/i.test(lower)) {
+    return `Core web platform standard (${name}) defining document structure, styling rules, client-server protocols, and browser rendering.`;
+  }
+  if (/react|hook|component|state|jsx|router/i.test(lower)) {
+    return `Modern declarative UI pattern (${name}) for managing component state, lifecycle updates, and single-page navigation.`;
+  }
+  if (/node|express|mongo|rest|api|axios/i.test(lower)) {
+    return `Full-stack application layer concept (${name}) for asynchronous data persistence, routing, and client-server communication.`;
+  }
+  return `Key syllabus topic${unitClean && unitClean !== "Full Syllabus" ? ` in ${unitClean}` : ""} covering the core principles, working mechanism, and applications of ${name}.`;
+}
+
+function buildAutoUnitName(section, topicNames) {
+  if (!section.autoTitle || !topicNames.length) return section.name;
+  const preview = topicNames
+    .slice(0, 2)
+    .map((t) => t.split(":")[0].replace(/\([^)]*\)/g, "").trim())
+    .filter(Boolean)
+    .join(" & ");
+  return preview ? `Unit ${section.unitNum}: ${preview}`.slice(0, 160) : section.name;
+}
+
+export function parseSyllabus(text) {
+  const sections = splitSyllabusSections(text);
+  return sections.map((section) => {
+    const names = extractTopicNames(section.lines).slice(0, 30);
+    const unitName = buildAutoUnitName(section, names).slice(0, 160);
+    return {
+      name: unitName,
+      topics: names.map((name) => ({
+        name: name.slice(0, 160),
+        description: describeTopic(name, unitName)
+      }))
+    };
+  });
+}
+
+/**
+ * True when a stored custom subject was parsed by an older parser:
+ * - One giant topic per unit
+ * - Any topic is literally "Unit - 1" / "Unit 1"
+ * - Multiple units were collapsed into a single "Full Syllabus" unit
+ * - Topics still have glued sentences ("A. B: C") or generic placeholder descriptions
+ */
+export function looksUnsplit(units = [], syllabusText = "") {
+  if (!Array.isArray(units) || !units.length) return false;
+  if (syllabusText && units.length === 1 && splitSyllabusSections(syllabusText).length > 1) return true;
+  return units.some((unit) => {
+    const topics = Array.isArray(unit?.topics) ? unit.topics : [];
+    if (topics.length === 1 && topics[0].name.length > LONG_LINE) return true;
+    return topics.some((t) =>
+      standaloneUnitMarker.test(t?.name || "") ||
+      /\.\s+[A-Z][a-z]+/.test(t?.name || "")
+    );
+  });
+}
+
+/**
+ * Uses Chints (Gemini) to extract clean topics + 1-sentence definitions per unit,
+ * trying fallback Gemini models if the primary model is busy (503/429), and falling
+ * back to our local Chints syllabus analyzer if offline.
+ */
+export async function parseSyllabusWithChints(text) {
+  const localUnits = parseSyllabus(text);
+  const key = process.env.GEMINI_API_KEY || "";
+  if (!key) return localUnits;
+
+  const sections = splitSyllabusSections(text);
+  const unitsBlock = sections
+    .map((sec, idx) => `UNIT ${idx + 1} ("${localUnits[idx]?.name || sec.name}"):\n${sec.lines.join("\n").slice(0, 2000)}`)
+    .join("\n\n");
+
+  const prompt = `Below are ${sections.length} unit(s) from a college course syllabus.
+For EACH unit:
+1. Give a clean unit title ("Unit 1: <concise title>").
+2. Extract a clean list of the distinct individual topics covered in that unit (never combine two topics into one item, and never include "Unit 1" as a topic).
+3. Write a concise one-sentence academic definition/description for each topic suitable for exam revision and MCQ generation.
+
+${unitsBlock}
+
+Return ONLY a JSON array with exactly ${sections.length} object(s) IN THE SAME ORDER:
+[{"name": "Unit 1: ...", "topics": [{"name": "...", "description": "..."}]}]`;
+
+  const models = [...new Set([process.env.GEMINI_MODEL || "gemini-2.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"])];
+
+  for (const model of models) {
+    try {
+      const reply = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } }),
+        signal: AbortSignal.timeout(25_000)
+      });
+      if (!reply.ok) continue;
+      const payload = await reply.json();
+      const raw = payload?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+      const parsed = JSON.parse(raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim());
+      if (!Array.isArray(parsed) || parsed.length !== sections.length) continue;
+
+      return sections.map((sec, idx) => {
+        const aiUnit = parsed[idx] || {};
+        const unitName = (typeof aiUnit.name === "string" && aiUnit.name.trim() ? aiUnit.name.trim() : localUnits[idx]?.name || sec.name).slice(0, 160);
+        const items = Array.isArray(aiUnit.topics) ? aiUnit.topics : [];
+        const cleaned = items
+          .filter((t) => t && typeof t.name === "string" && t.name.trim() && !standaloneUnitMarker.test(t.name))
+          .slice(0, 30)
+          .map((t) => {
+            const name = t.name.trim().slice(0, 160);
+            const desc = String(t.description || t.def || "").trim();
+            return {
+              name,
+              description: (desc && desc !== DEFAULT_DESCRIPTION ? desc : describeTopic(name, unitName)).slice(0, 1000)
+            };
+          });
+        return {
+          name: unitName,
+          topics: cleaned.length ? cleaned : localUnits[idx].topics
+        };
+      });
+    } catch {
+      // Try next model or fall back to localUnits
+    }
+  }
+
+  return localUnits;
+}
+
+export function countSyllabusTopics(units = []) {
+  if (!Array.isArray(units)) return 0;
+  return units.reduce((sum, u) => sum + (Array.isArray(u?.topics) ? u.topics.length : 0), 0);
+}
