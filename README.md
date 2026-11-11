@@ -104,3 +104,8 @@ Run API helper tests with `npm --prefix server test` and build the client with `
 - Every published quiz includes a one-click **Share** action that copies a direct test link (`#/quiz/<quizId>`).
 - Opening `#/quiz/<quizId>` loads the dedicated Shared Quiz landing page so students can immediately start a timed attempt.
 - Teachers can monitor all published quizzes, student creators, and attempt scores from the **Teacher Console** (`GET /api/admin/overview`).
+
+### Testing, Coverage & E2E Smoke Suite
+
+- **Unit Tests & Coverage**: `npm --prefix server test` (or `node --test --experimental-test-coverage` inside `server/`).
+- **End-to-End Smoke Suite**: `node server/scripts/smoke.js` (executes 25 live API assertions across Auth, Subjects, Chints AI, Privacy, Share Links, and Timed Attempts).
