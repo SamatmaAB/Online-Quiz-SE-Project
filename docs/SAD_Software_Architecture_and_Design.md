@@ -159,3 +159,16 @@ In accordance with the project evaluation guidelines (*"Deviations from the init
 3. **Chints AI Question Generator with Dual-Mode Resilience (Sprint 3):** Integrated Google `gemini-3.8-flash` for live AI question generation and syllabus parsing, paired with a built-in syllabus fallback engine so demos succeed even on machines without an external API key.
 4. **Student vs. Teacher Role Selector & Shareable Test Links (Sprint 3):** Added explicit **Student** and **Teacher (Admin)** account selection at sign-up, account-private generated quizzes for students, full Teacher oversight, and one-click `#/quiz/:quizId` share links.
 
+
+---
+
+## 9. Component Responsibility Matrix
+
+| Layer | Module / File | Primary Responsibility |
+| :--- | :--- | :--- |
+| **Presentation** | `client/src/Subjects.jsx` | Course enrollment, unit exploration, and custom syllabus upload modal |
+| **Presentation** | `client/src/Builder.jsx` | Chints AI Studio prompt controls, question review, and quiz publishing |
+| **Presentation** | `client/src/Manage.jsx` | Personal quiz workspace (`MyQuizzes`), attempt review (`History`), and `TeacherConsole` |
+| **API Routing** | `server/src/routes/subjects.js` | Built-in/custom subject catalog, enrollment, and syllabus parsing endpoints |
+| **API Routing** | `server/src/routes/ai.js` | Live Gemini 3.8 Flash MCQ generation and deterministic syllabus fallback |
+| **Domain Service** | `server/src/services/catalog.js` | Pagination, regex-safe search normalization, and public quiz serialization |
