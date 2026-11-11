@@ -34,4 +34,47 @@ export default function Settings() {
         <div className="accent-grid" role="radiogroup" aria-label="Accent colour">
           {Object.entries(accents).map(([key, value]) => (
             <button key={key} type="button" role="radio" aria-checked={accent === key}
-// Stage 1
+              className={accent === key ? "accent-option selected" : "accent-option"} onClick={() => setAccent(key)}>
+              <span className="swatch" style={{ background: `linear-gradient(135deg, ${value.light[0]}, ${value.light[1]})` }} />
+              <b>{value.label}</b>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card card-pad" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
+          <div className="card-title" style={{ marginBottom: 4 }}><h2><Icon name="sparkle" size={20} /> Chints Virtual Cat Companion</h2></div>
+          <p className="text-muted" style={{ fontSize: 13.5 }}>
+            Pick how Chints looks! Chints watches your cursor, swats at it when you come close, plays with a wool ball, and curls up to sleep after 5 minutes of inactivity.
+          </p>
+        </div>
+        <div className="cat-breed-grid" role="radiogroup" aria-label="Chints Cat Breed">
+          {Object.values(CAT_BREEDS).map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              role="radio"
+              aria-checked={catBreed === b.id}
+              className={catBreed === b.id ? "cat-breed-card selected" : "cat-breed-card"}
+              onClick={() => setCatBreed?.(b.id)}
+            >
+              <ChintsCat breed={b.id} size={74} interactive={false} />
+              <div>
+                <b>{b.name}</b>
+                <small className="text-muted" style={{ display: "block", marginTop: 2 }}>{b.desc}</small>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card card-pad" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="card-title" style={{ marginBottom: 0 }}><h2><Icon name="user" size={20} /> Account</h2></div>
+        <p><b>{user.name}</b> · {user.email}</p>
+        <p className="text-muted">Role: {user.role === "admin" ? "Teacher (Admin)" : "Student"}</p>
+      </section>
+    </div>
+  );
+}
+
