@@ -32,7 +32,11 @@ const paths = {
   play: "M7 4v16l13-8z",
   share: "M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13",
   user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
-  more: "M5 12h.01M12 12h.01M19 12h.01"
+  more: "M5 12h.01M12 12h.01M19 12h.01",
+  info: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5M12 8h.01",
+  settings: "M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4",
+  palette: "M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2 0-1.5-1-1.5-1-3 0-1 1-2 2-2h3a3 3 0 0 0 3-3c0-4.4-4-8-9-8zM7.5 11h.01M10 7h.01M15 7h.01",
+  monitor: "M3 4h18v12H3zM8 21h8M12 16v5"
 };
 
 export function Icon({ name, size = 20, stroke = 1.9, className = "" }) {
@@ -56,7 +60,25 @@ export function formatDate(value) {
   return new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 export const formatDay = (value) => (value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "—");
-export const subjectBadge = (subject) => (subject.code ? subject.code.replace(/[^A-Za-z]/g, "").slice(0, 2) || subject.name[0] : subject.name[0]).toUpperCase();
+/** Two-letter badge for a subject card, built from the subject name (e.g. "Machine Learning" -> "ML"). */
+export function subjectBadge(subject) {
+  const raw = String(subject?.name || "").trim();
+  if (!raw) return "SB";
+  if (/^ui\s*\/\s*ux/i.test(raw)) return "UI";
+  if (/^database\s+management/i.test(raw)) return "DB";
+  const stop = new Set(["and", "with", "of", "in", "the", "for", "to", "on", "a", "an"]);
+  const words = raw.split(/[\s/&-]+/).filter((w) => w && !stop.has(w.toLowerCase()));
+  if (words.length === 0) return raw.slice(0, 2).toUpperCase();
+  if (words.length === 1 || /^[A-Z]{2,4}$/.test(words[0])) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+/** Human-readable subject name for a stored subject key; never shows raw database ids. */
+export function subjectLabel(key, names = {}) {
+  if (!key) return "";
+  if (names[key]) return names[key];
+  return /^C[0-9a-f]{24}$/.test(key) ? "Custom subject" : key;
+}
 
 export function shareQuizUrl(quizId) {
   return `${window.location.origin}${window.location.pathname}#/quiz/${encodeURIComponent(quizId)}`;
