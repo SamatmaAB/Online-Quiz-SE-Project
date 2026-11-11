@@ -155,4 +155,97 @@ export default function Profile() {
                 <div>
                   <b>Student</b>
                   <small>Personal quizzes &amp; study units</small>
-// Stage 2
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("teacher")}
+                className={role === "teacher" ? "topic-option selected" : "topic-option"}
+                style={{ textAlign: "left", alignItems: "center" }}
+              >
+                <Icon name="shield" size={18} />
+                <div>
+                  <b>Teacher (Admin)</b>
+                  <small>Full Teacher Console &amp; all results</small>
+                </div>
+              </button>
+            </div>
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={savingProfile}>
+            <Icon name="check" size={16} /> {savingProfile ? "Saving…" : "Save profile changes"}
+          </button>
+        </form>
+
+        <form className="card card-pad" onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="card-title" style={{ marginBottom: 0 }}>
+            <h3><Icon name="shield" size={18} /> Change password</h3>
+          </div>
+          <Alert kind="error" onClose={() => setPwdErr("")}>{pwdErr}</Alert>
+          <label className="field">
+            Current password *
+            <input type="password" value={passwords.currentPassword} onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })} minLength={8} maxLength={72} required />
+          </label>
+          <label className="field">
+            New password * (8–72 characters)
+            <input type="password" value={passwords.newPassword} onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })} minLength={8} maxLength={72} required />
+          </label>
+          <label className="field">
+            Confirm new password *
+            <input type="password" value={passwords.confirmPassword} onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })} minLength={8} maxLength={72} required />
+          </label>
+          <button type="submit" className="btn btn-primary" disabled={savingPwd}>
+            <Icon name="check" size={16} /> {savingPwd ? "Updating password…" : "Update password"}
+          </button>
+        </form>
+      </section>
+
+      <section className="split even">
+        <div className="card card-pad">
+          <div className="card-title">
+            <h3>Enrolled subjects ({enrolled.length})</h3>
+            <button className="link-button" onClick={() => navigate("/subjects")}>Manage →</button>
+          </div>
+          {enrolled.length === 0 ? (
+            <p className="text-muted">You haven't enrolled in any subjects yet.</p>
+          ) : (
+            <div className="list">
+              {enrolled.map((s) => (
+                <button key={s.key} className="list-row" style={{ background: "none", border: 0, borderTop: "1px solid var(--border)", textAlign: "left", width: "100%" }} onClick={() => navigate(`/subjects/${encodeURIComponent(s.key)}`)}>
+                  <span className="subject-icon" style={{ "--hue": hueFor(s.key), width: 36, height: 36, fontSize: 13 }}>{subjectBadge(s)}</span>
+                  <div className="grow">
+                    <b>{s.name}</b>
+                    <small>{s.units?.length || 0} units · {(s.units || []).reduce((n, u) => n + (u.topics?.length || 0), 0)} topics</small>
+                  </div>
+                  {s.isCustom && <Badge>Custom</Badge>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="card card-pad">
+          <div className="card-title">
+            <h3>Recent quiz attempts</h3>
+            <button className="link-button" onClick={() => navigate("/history")}>All attempts →</button>
+          </div>
+          {attempts.length === 0 ? (
+            <p className="text-muted">No attempts yet — start a quiz from any subject unit or the catalog.</p>
+          ) : (
+            <div className="list">
+              {attempts.slice(0, 6).map((a) => (
+                <button key={a.id} className="list-row" style={{ background: "none", border: 0, borderTop: "1px solid var(--border)", textAlign: "left", width: "100%" }} onClick={() => navigate(`/attempt/${a.id}`)}>
+                  <div className="grow">
+                    <b>{a.quiz.title}</b>
+                    <small>{formatDate(a.startedAt)}</small>
+                  </div>
+                  {a.status === "in-progress" ? <Badge kind="in-progress">In progress</Badge> : <Badge kind={scoreKind(a.percentage)}>{a.score}/{a.totalQuestions} ({a.percentage}%)</Badge>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
