@@ -80,3 +80,10 @@ The client includes a responsive searchable quiz catalog, category filters, time
 ## Checks
 
 Run API helper tests with `npm --prefix server test` and build the client with `npm --prefix client run build`.
+
+### Subjects & Custom Syllabus Management (Sprint 3)
+
+- `GET /api/subjects` returns all 5 built-in courses (`SE`, `UIUX`, `KOTLIN`, `DBMS`, `ML`), user-uploaded custom subjects, and the current user's enrolled subject keys.
+- `GET /api/subjects/:subjectKey` returns the 4 unit definitions, syllabus topics, and visible unit-specific quizzes.
+- `POST /api/subjects/enroll` and `POST /api/subjects/leave` manage course enrollment for the signed-in student or teacher.
+- `POST /api/subjects/custom` parses raw syllabus text into structured units using Chints and creates a custom course.
