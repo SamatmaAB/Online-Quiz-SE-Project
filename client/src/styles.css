@@ -742,4 +742,449 @@ tbody tr:hover { background: var(--surface-2); }
   font-weight: 600;
   border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
   background: var(--surface);
-// Stage 2
+  color: var(--primary);
+  transition: all .15s;
+}
+.chints-chip:hover:not(:disabled), .chints-chip.active {
+  background: var(--primary);
+  color: #fff;
+}
+.chints-cat-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.chints-typing { color: var(--muted); font-style: italic; }
+
+.chints-calc-bar {
+  display: flex;
+  gap: 5px;
+  padding: 8px 12px 0;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.chints-calc-btn {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+.chints-calc-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+.chints-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.chints-text-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 13px !important;
+  font-size: 13.5px !important;
+  border-radius: 12px !important;
+  background: var(--bg-soft) !important;
+  color: var(--text) !important;
+  border: 1.5px solid var(--border) !important;
+  caret-color: var(--primary);
+}
+.chints-text-input::placeholder {
+  color: var(--muted);
+}
+.chints-text-input:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  background: var(--surface-2) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.chints-send { padding: 9px 13px; border-radius: 11px; flex: none; }
+
+/* ───────── Chints Virtual Cat Mascot (Stage + Corner Launcher + Animations) ───────── */
+.chints-cat-stage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--grad-soft);
+  border-bottom: 1px solid var(--border);
+}
+.chints-cat-stage-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.chints-cat-stage-info b { font-size: 12.5px; }
+.chints-cat-stage-info small { font-size: 11px; color: var(--muted); }
+.chints-mini-btn {
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .15s, color .15s;
+}
+.chints-mini-btn:hover { border-color: var(--primary); color: var(--primary); }
+.chints-mini-btn.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.chints-sci-calc {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.chints-calc-btn.eq {
+  background: var(--grad);
+  color: #fff;
+  border-color: transparent;
+}
+
+.chints-cat-corner {
+  position: fixed;
+  right: 18px;
+  bottom: 14px;
+  z-index: 130;
+  cursor: pointer;
+}
+
+.chints-cat-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  user-select: none;
+  cursor: pointer;
+  transition: transform .18s ease;
+}
+.chints-cat-wrap:hover {
+  transform: translateY(-3px) scale(1.03);
+}
+.chints-cat-svg {
+  overflow: visible;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .28));
+}
+
+.cat-tail {
+  transform-origin: 86px 92px;
+  animation: catTailWag 2.8s ease-in-out infinite;
+}
+.cat-play-cursor .cat-tail,
+.cat-play-wool .cat-tail {
+  animation-duration: 0.7s;
+}
+.cat-sleeping .cat-tail {
+  animation: none;
+}
+
+@keyframes catTailWag {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(12deg); }
+}
+
+.cat-paw-active {
+  transform-origin: 44px 96px;
+  animation: catPawSwat 0.42s ease-in-out infinite alternate;
+}
+@keyframes catPawSwat {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-6px, -11px) rotate(-18deg); }
+}
+
+.cat-wool-on-belly {
+  transform-origin: 67px 74px;
+  animation: woolBellyBounce 0.45s ease-in-out infinite alternate;
+}
+@keyframes woolBellyBounce {
+  0% { transform: translate(0, 0) rotate(-12deg); }
+  100% { transform: translate(3px, -4px) rotate(18deg); }
+}
+
+.cat-wool-rollaway {
+  transform-origin: 67px 74px;
+  animation: woolRollOffBelly 1.45s cubic-bezier(0.25, 0.8, 0.4, 1) forwards;
+}
+@keyframes woolRollOffBelly {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  35% { transform: translate(22px, 18px) rotate(160deg); opacity: 1; }
+  100% { transform: translate(58px, 26px) rotate(480deg); opacity: 0; }
+}
+
+.cat-head-biting {
+  transform-origin: 38px 68px;
+  animation: catBiteWool 0.42s ease-in-out infinite alternate;
+}
+@keyframes catBiteWool {
+  0% { transform: translate(0px, 0px) rotate(0deg); }
+  100% { transform: translate(7px, 4px) rotate(13deg); }
+}
+
+.cat-kick-paws {
+  transform-origin: 94px 80px;
+  animation: catKickWool 0.32s ease-in-out infinite alternate;
+}
+@keyframes catKickWool {
+  0% { transform: translateX(0px) rotate(0deg); }
+  100% { transform: translateX(-6px) rotate(-15deg); }
+}
+
+.cat-hug-paws {
+  transform-origin: 54px 75px;
+  animation: catHugWool 0.42s ease-in-out infinite alternate;
+}
+@keyframes catHugWool {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-4px); }
+}
+
+.cat-loaf-pose {
+  transform-origin: 66px 96px;
+  animation: catLoafBreathe 3.2s ease-in-out infinite;
+}
+@keyframes catLoafBreathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.035); }
+}
+
+/* In-between 1: Wool ball rolls in from outside and bonks sleeping cat on the head! */
+.wool-bonk-anim {
+  transform-origin: 48px 50px;
+  animation: woolBonkHead 0.92s cubic-bezier(0.25, 0.8, 0.4, 1) forwards;
+}
+@keyframes woolBonkHead {
+  0% { transform: translate(-52px, -36px) rotate(-360deg); opacity: 0; }
+  20% { opacity: 1; }
+  55% { transform: translate(0px, 0px) rotate(0deg); }
+  78% { transform: translate(-10px, -14px) rotate(-95deg); }
+  100% { transform: translate(-18px, 28px) rotate(-200deg); opacity: 1; }
+}
+
+.wool-bonk-settled {
+  transform: translate(-18px, 28px);
+  animation: woolBellyBounce 0.35s ease-in-out infinite alternate;
+}
+
+.cat-head-bonked {
+  transform-origin: 46px 74px;
+  animation: catHeadBonkRecoil 0.92s ease-out;
+}
+@keyframes catHeadBonkRecoil {
+  0%, 48% { transform: translateY(0) rotate(0deg); }
+  60% { transform: translateY(6px) rotate(-10deg) scaleY(0.92); }
+  80% { transform: translateY(-3px) rotate(5deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+.cat-head-alert {
+  transform-origin: 46px 74px;
+  animation: catHeadNotice 0.85s ease-in-out forwards;
+}
+@keyframes catHeadNotice {
+  0% { transform: translateY(0) rotate(0deg); }
+  35% { transform: translateY(-5px) rotate(-8deg); }
+  75% { transform: translateY(-2px) rotate(12deg); }
+  100% { transform: translateY(2px) rotate(22deg); }
+}
+
+.cat-bonk-pop {
+  position: absolute;
+  top: -6px;
+  left: 16px;
+  font-weight: 900;
+  font-size: 17px;
+  color: #f59e0b;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+  animation: bonkExclaim 0.45s ease-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes bonkExclaim {
+  0% { transform: translateY(0) scale(0.95); }
+  100% { transform: translateY(-5px) scale(1.15); }
+}
+
+/* In-between 2: Sitting -> Wool ball rolls onto belly as cat flops onto its back */
+.wool-rollin-anim {
+  transform-origin: 67px 74px;
+  animation: woolRollOntoBelly 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes woolRollOntoBelly {
+  0% { transform: translate(45px, 16px) rotate(280deg); opacity: 0.2; }
+  100% { transform: translate(0px, 0px) rotate(0deg); opacity: 1; }
+}
+
+.cat-flopping-back {
+  transform-origin: 64px 86px;
+  animation: catFlopOntoBack 0.62s ease-out;
+}
+@keyframes catFlopOntoBack {
+  0% { transform: translateY(-10px) rotate(-14deg) scaleY(0.9); }
+  65% { transform: translateY(2px) rotate(4deg) scaleY(1.04); }
+  100% { transform: translateY(0) rotate(0deg) scaleY(1); }
+}
+
+/* In-between 3: Playing/Sitting -> Stand up -> 360° slow rotate right-to-left -> Settle into loaf */
+.cat-standing-rise {
+  transform-origin: 60px 96px;
+  animation: catStandRise 0.68s ease-out forwards;
+}
+@keyframes catStandRise {
+  0% { transform: translateY(10px) scaleY(0.82); }
+  60% { transform: translateY(-3px) scaleY(1.06); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+
+.cat-standing-spin360 {
+  transform-origin: 60px 80px;
+  animation: catCircleRightToLeft 1.42s ease-in-out forwards;
+}
+@keyframes catCircleRightToLeft {
+  0%   { transform: translateX(0px) scaleX(1) translateY(0px); }
+  22%  { transform: translateX(-8px) scaleX(0.35) translateY(-3px); }
+  25%  { transform: translateX(-8px) scaleX(-0.35) translateY(-3px); }
+  50%  { transform: translateX(0px) scaleX(-1) translateY(-5px); }
+  73%  { transform: translateX(8px) scaleX(-0.35) translateY(-2px); }
+  76%  { transform: translateX(8px) scaleX(0.35) translateY(-2px); }
+  100% { transform: translateX(0px) scaleX(1) translateY(4px); }
+}
+
+.cat-standing-spin360 .leg-step-a {
+  animation: catLegStep 0.24s ease-in-out infinite alternate;
+}
+.cat-standing-spin360 .leg-step-b {
+  animation: catLegStep 0.24s ease-in-out 0.12s infinite alternate;
+}
+@keyframes catLegStep {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-5px); }
+}
+
+.cat-loaf-group.settle-loaf {
+  transform-origin: 64px 98px;
+  animation: catSettleIntoLoaf 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes catSettleIntoLoaf {
+  0% { transform: translateY(-12px) scaleY(1.16) scaleX(0.92); }
+  65% { transform: translateY(2px) scaleY(0.94) scaleX(1.05); }
+  100% { transform: translateY(0) scaleY(1) scaleX(1); }
+}
+
+.cat-standing-stretch {
+  transform-origin: 60px 96px;
+  animation: catWakeStretch 0.62s ease-out forwards;
+}
+@keyframes catWakeStretch {
+  0% { transform: translateY(6px) scaleY(0.86); }
+  50% { transform: translateY(-5px) scaleY(1.1) rotate(-4deg); }
+  100% { transform: translateY(0) scaleY(1) rotate(0deg); }
+}
+
+.chints-history-empty {
+  padding: 28px 16px;
+  text-align: center;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.chints-history-empty p { font-weight: 600; font-size: 13.5px; }
+
+.cat-zzz {
+  position: absolute;
+  top: -4px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  font-weight: 800;
+  color: var(--primary);
+  pointer-events: none;
+}
+.cat-zzz span {
+  animation: zzzFloat 2.2s ease-in-out infinite;
+  font-size: 12px;
+}
+.cat-zzz span:nth-child(2) { animation-delay: 0.5s; font-size: 15px; }
+.cat-zzz span:nth-child(3) { animation-delay: 1s; font-size: 18px; }
+
+@keyframes zzzFloat {
+  0%, 100% { transform: translateY(0) scale(0.9); opacity: 0.4; }
+  50% { transform: translateY(-8px) scale(1.1); opacity: 1; }
+}
+
+.cat-cursor-pop {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  font-size: 16px;
+  animation: catPawSwat 0.4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.cat-badge-pill {
+  position: absolute;
+  bottom: -4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  background: var(--grad);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(91, 91, 240, .4);
+  white-space: nowrap;
+}
+
+.cat-breed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.cat-breed-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.cat-breed-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+.cat-breed-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+@media (max-width: 900px) {
+  .chints-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(380px, 92vw);
+    box-shadow: var(--shadow-lg);
+    z-index: 90;
+  }
+  .chints-panel.tucked {
+    transform: translateX(105%);
+  }
+}
+
+.chints-review-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  background: var(--grad-soft);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
