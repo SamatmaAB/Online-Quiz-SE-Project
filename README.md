@@ -98,3 +98,9 @@ Run API helper tests with `npm --prefix server test` and build the client with `
 - During registration (`POST /api/auth/register`), users can select **Student** (`role: "user"`) or **Teacher** (`role: "admin"`).
 - Student-generated quizzes remain private to the creator's own account in catalog and unit listings.
 - Teachers (`role: "admin"`) have full global visibility across all student-created and teacher-created quizzes.
+
+### Shareable Test Links & Teacher Console
+
+- Every published quiz includes a one-click **Share** action that copies a direct test link (`#/quiz/<quizId>`).
+- Opening `#/quiz/<quizId>` loads the dedicated Shared Quiz landing page so students can immediately start a timed attempt.
+- Teachers can monitor all published quizzes, student creators, and attempt scores from the **Teacher Console** (`GET /api/admin/overview`).
