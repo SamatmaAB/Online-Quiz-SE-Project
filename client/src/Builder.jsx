@@ -148,4 +148,154 @@ export default function Builder({ editQuizId = null }) {
       return { ...q, options: nextOpts, correctOption: nextCorrect };
     }));
   }
-// Stage 1
+
+  function removeQuestion(idx) {
+    setQuestions((curr) => curr.filter((_, i) => i !== idx));
+  }
+
+  async function handleGenerateAi() {
+    setAiError("");
+    const topics = [
+      ...selectedTopics.map((name) => {
+        const match = unitTopics.find((t) => t.name === name);
+        return { name, description: match?.description || "" };
+      }),
+      ...customTopic.split(",").map((s) => s.trim()).filter(Boolean).map((name) => ({ name }))
+    ];
+    if (!topics.length) {
+      setAiError("Select at least one syllabus topic or type a custom topic first.");
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const context = currentSubject ? `${currentSubject.name} - ${currentUnit?.name || ""}` : title || category;
+      const data = await generateQuestions({ topics, count: Number(aiCount) || 5, context, difficulty }, token);
+      setQuestions((curr) => {
+        const nonEmpty = curr.filter((q) => q.prompt.trim() || q.options.some((o) => o.trim()));
+        return [...nonEmpty, ...data.questions];
+      });
+      setSource("ai");
+      toast(`Chints drafted ${data.questions.length} ${difficulty} question${data.questions.length === 1 ? "" : "s"}${data.source === "gemini" ? "" : " using the built-in syllabus engine"}.`);
+    } catch (err) {
+      setAiError(err.message);
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function save(publishFlag) {
+    setError("");
+    const cleaned = questions
+      .map((q) => ({
+        prompt: q.prompt.trim(),
+        options: q.options.map((o) => o.trim()).filter(Boolean),
+        correctOption: Number(q.correctOption)
+      }))
+      .filter((q) => q.prompt || q.options.length);
+
+    if (!title.trim() || title.trim().length < 2) return setError("Give your quiz a title (at least 2 characters).");
+    if (!category.trim()) return setError("Enter or pick a category (e.g. Software Engineering).");
+    if (publishFlag && cleaned.length === 0) return setError("Add at least one complete question before publishing, or save as a draft.");
+    for (let i = 0; i < cleaned.length; i += 1) {
+      const q = cleaned[i];
+      if (!q.prompt) return setError(`Question ${i + 1} is missing its prompt.`);
+      if (q.options.length < 2) return setError(`Question ${i + 1} needs at least 2 non-empty options.`);
+      if (q.correctOption < 0 || q.correctOption >= q.options.length) return setError(`Pick a valid correct answer for Question ${i + 1}.`);
+    }
+
+    const payload = {
+      title: title.trim(),
+      description: description.trim(),
+      category: category.trim(),
+      difficulty,
+      durationMinutes: Number(durationMinutes) || 10,
+      isPublished: Boolean(publishFlag),
+      subjectKey: subjectKey ? subjectKey : null,
+      unitIndex: subjectKey ? Number(unitIndex) : null,
+      source,
+      questions: cleaned
+    };
+
+    setSaving(true);
+    try {
+      if (editQuizId) {
+        await replaceQuiz(editQuizId, payload, token);
+        toast(publishFlag ? "Quiz updated" : "Saved as draft");
+      } else {
+        await createQuiz(payload, token);
+        toast(publishFlag ? "Quiz published!" : "Draft saved");
+      }
+      if (subjectKey) navigate(`/subjects/${encodeURIComponent(subjectKey)}/unit/${unitIndex}`);
+      else navigate("/my-quizzes");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteThisQuiz() {
+    if (await confirmDeleteQuiz({ id: editQuizId, title }, token, toast)) {
+      if (subjectKey) navigate(`/subjects/${encodeURIComponent(subjectKey)}/unit/${unitIndex}`);
+      else navigate("/my-quizzes");
+    }
+  }
+
+  if (loading) return <div className="page"><Loading /></div>;
+
+  const aiMode = mode === "ai";
+
+  const aiPanel = (
+    <div className={aiMode ? "ai-panel ai-panel-main" : "ai-panel"}>
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <h3><Icon name="sparkle" /> {aiMode ? "Generate questions with Chints" : "Need ideas? Ask Chints"}</h3>
+        <Badge kind="ok">{aiStatus.liveAi ? "Chints Live AI" : "Chints Ready"}</Badge>
+      </div>
+      <p className="text-muted" style={{ fontSize: 13.5 }}>
+        {aiMode
+          ? "Choose the syllabus topics, the difficulty and how many questions you want. Chints drafts them below — review and edit before you publish."
+          : "Optional: let Chints draft extra questions from this unit's topics. They are added to your list and you can edit every one."}
+      </p>
+
+      <Alert kind="error" onClose={() => setAiError("")}>{aiError}</Alert>
+
+      <div>
+        <strong style={{ fontSize: 13 }}>Difficulty</strong>
+        <div className="chips" style={{ marginTop: 8 }} role="radiogroup" aria-label="Question difficulty">
+          {DIFFICULTIES.map((d) => (
+            <button key={d.value} type="button" role="radio" aria-checked={difficulty === d.value} title={d.hint}
+              className={difficulty === d.value ? "chip active" : "chip"} onClick={() => setDifficulty(d.value)}>{d.label}</button>
+          ))}
+        </div>
+        <small className="text-muted">{DIFFICULTIES.find((d) => d.value === difficulty)?.hint}. This also becomes the quiz difficulty.</small>
+      </div>
+
+      {unitTopics.length > 0 ? (
+        <div>
+          <div className="row" style={{ justifyContent: "space-between", marginBottom: 6 }}>
+            <strong style={{ fontSize: 13 }}>Syllabus topics — {selectedTopics.length} of {unitTopics.length} selected</strong>
+            <div className="row" style={{ gap: 8 }}>
+              <button type="button" className="link-button" style={{ fontSize: 12.5 }} onClick={() => setSelectedTopics(unitTopics.map((t) => t.name))}>Select all</button>
+              <button type="button" className="link-button" style={{ fontSize: 12.5 }} onClick={() => setSelectedTopics([])}>Clear</button>
+            </div>
+          </div>
+          <div className={aiMode ? "topic-picker" : "topic-scroll"}>
+            {unitTopics.map((t, i) => {
+              const checked = selectedTopics.includes(t.name);
+              return (
+                <label key={i} className={checked ? "topic-option selected" : "topic-option"} style={{ padding: "8px 10px" }}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleTopic(t.name)} />
+                  <div><b style={{ fontSize: 13 }}>{t.name}</b></div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <Alert kind="info">
+          {subjectKey
+            ? "This unit has no syllabus topics yet — type your own topics below."
+            : "Link this quiz to a subject unit (in the details above) to pick syllabus topics, or just type your own topics below."}
+        </Alert>
+      )}
+// Stage 2
