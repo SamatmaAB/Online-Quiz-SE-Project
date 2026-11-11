@@ -39,7 +39,7 @@ export function summarizeCatalogQuizzes(quizzes = []) {
   let chintsCount = 0;
   let manualCount = 0;
   for (const q of quizzes) {
-    if (q?.source === "chints") chintsCount += 1;
+    if (q?.source === "chints" || q?.source === "ai") chintsCount += 1;
     else manualCount += 1;
   }
   return { total: quizzes.length, chintsCount, manualCount };
