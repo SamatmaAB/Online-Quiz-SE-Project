@@ -175,4 +175,215 @@ function Shell({ session, onSession, theme, onTheme, themeCtx }) {
             >
               <Icon name="arrowLeft" size={17} />
             </button>
-// Stage 1
+          </div>
+
+          <div className="nav-group">
+            <button type="button" className="nav-label nav-label-btn" onClick={() => toggleGroup("learn")}>
+              <span>Learn</span>
+              <Icon name="chevron" size={14} className={openGroups.learn ? "chev open" : "chev"} />
+            </button>
+            {openGroups.learn && (
+              <>
+                <button className={active === "dashboard" ? "nav-link active" : "nav-link"} onClick={() => navigate("/")}><Icon name="home" /> Dashboard</button>
+                <button className={active === "subjects" ? "nav-link active" : "nav-link"} onClick={() => navigate("/subjects")}><Icon name="book" /> Subjects &amp; Units</button>
+                <button className={active === "explore" ? "nav-link active" : "nav-link"} onClick={() => navigate("/explore")}><Icon name="compass" /> Explore Catalog</button>
+                <button className={active === "history" ? "nav-link active" : "nav-link"} onClick={() => navigate("/history")}><Icon name="history" /> Attempt History</button>
+              </>
+            )}
+          </div>
+
+          <div className="nav-group">
+            <button type="button" className="nav-label nav-label-btn" onClick={() => toggleGroup("authoring")}>
+              <span>Authoring</span>
+              <Icon name="chevron" size={14} className={openGroups.authoring ? "chev open" : "chev"} />
+            </button>
+            {openGroups.authoring && (
+              <>
+                <button className={active === "create" ? "nav-link active" : "nav-link"} onClick={() => navigate("/create")}><Icon name="plus" /> Create Quiz</button>
+                <button className={active === "my-quizzes" || active === "edit" ? "nav-link active" : "nav-link"} onClick={() => navigate("/my-quizzes")}><Icon name="edit" /> My Quizzes</button>
+              </>
+            )}
+          </div>
+
+          {session.user.role === "admin" && (
+            <div className="nav-group">
+              <button type="button" className="nav-label nav-label-btn" onClick={() => toggleGroup("admin")}>
+                <span>Teacher / Admin</span>
+                <Icon name="chevron" size={14} className={openGroups.admin ? "chev open" : "chev"} />
+              </button>
+              {openGroups.admin && (
+                <button className={active === "admin" ? "nav-link active" : "nav-link"} onClick={() => navigate("/admin")}><Icon name="shield" /> Teacher Console</button>
+              )}
+            </div>
+          )}
+
+          <div className="nav-group">
+            <button type="button" className="nav-label nav-label-btn" onClick={() => toggleGroup("account")}>
+              <span>Account &amp; Help</span>
+              <Icon name="chevron" size={14} className={openGroups.account ? "chev open" : "chev"} />
+            </button>
+            {openGroups.account && (
+              <>
+                <button className={active === "profile" ? "nav-link active" : "nav-link"} onClick={() => navigate("/profile")}><Icon name="user" /> My Profile</button>
+                <button className={active === "settings" ? "nav-link active" : "nav-link"} onClick={() => navigate("/settings")}><Icon name="palette" /> Settings &amp; Theme</button>
+                <button className={active === "about" ? "nav-link active" : "nav-link"} onClick={() => navigate("/about")}><Icon name="info" /> About &amp; Guide</button>
+              </>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="sidebar-foot"
+            onClick={() => setChintsTuck(false)}
+            style={{ textAlign: "left", cursor: "pointer" }}
+            title="Open Chints AI panel on the right"
+          >
+            <strong><Icon name="sparkle" size={14} /> Powered by Chints AI</strong>
+            <span>Click to open Chints AI co-pilot on the right →</span>
+          </button>
+        </aside>
+
+        <div className="main">
+          <header className="topbar">
+            <button
+              type="button"
+              className="icon-button menu-button"
+              onClick={handleMenuButton}
+              aria-label="Toggle sidebar"
+              title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+            >
+              <Icon name="menu" />
+            </button>
+            {active !== "dashboard" && (
+              <button
+                type="button"
+                className="btn btn-sm topbar-back"
+                onClick={() => (window.history.length > 1 ? window.history.back() : navigate("/"))}
+                title="Go back"
+              >
+                <Icon name="arrowLeft" size={15} /> Back
+              </button>
+            )}
+            <form className="top-search" onSubmit={submitTopSearch}>
+              <Icon name="search" size={18} />
+              <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search quizzes across all topics…" maxLength={100} />
+            </form>
+            <div className="top-actions">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate("/create")}><Icon name="plus" size={15} /> New quiz</button>
+              <button
+                type="button"
+                className={chintsTucked ? "btn btn-sm" : "btn btn-sm chints-toggle-active"}
+                onClick={() => setChintsTuck()}
+                title={chintsTucked ? "Open Chints AI right panel" : "Tuck Chints AI panel in"}
+              >
+                <Icon name="sparkle" size={15} /> Chints AI
+              </button>
+              <button type="button" className="icon-button" onClick={onTheme} aria-label="Toggle theme" title="Toggle light/dark theme">
+                <Icon name={theme === "dark" ? "sun" : "moon"} />
+              </button>
+              <div className="user-menu">
+                <button type="button" className="user-chip" onClick={() => setUserMenuOpen((v) => !v)}>
+                  <span className="avatar">{initials(session.user.name)}</span>
+                  <span>
+                    <b>{session.user.name}</b>
+                    <small>{session.user.role === "admin" ? "Teacher (Admin)" : "Student"}</small>
+                  </span>
+                  <Icon name="chevron" size={16} />
+                </button>
+                {userMenuOpen && (
+                  <div className="popover">
+                    <button type="button" onClick={() => navigate("/profile")}><Icon name="user" size={16} /> My profile</button>
+                    <button type="button" onClick={() => navigate("/my-quizzes")}><Icon name="edit" size={16} /> My quizzes</button>
+                    <button type="button" onClick={() => navigate("/history")}><Icon name="history" size={16} /> My attempts</button>
+                    <button type="button" onClick={() => navigate("/settings")}><Icon name="palette" size={16} /> Settings &amp; theme</button>
+                    <button type="button" onClick={() => navigate("/about")}><Icon name="info" size={16} /> About &amp; guide</button>
+                    {session.user.role === "admin" && <button type="button" onClick={() => navigate("/admin")}><Icon name="shield" size={16} /> Teacher console</button>}
+                    <button type="button" onClick={handleLogout} style={{ color: "var(--danger)" }}><Icon name="logout" size={16} /> Sign out</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+          {content}
+        </div>
+
+        <ChintsChat tucked={chintsTucked} onToggleTuck={setChintsTuck} />
+      </div>
+    </AppContext.Provider>
+  );
+}
+
+export default function App() {
+  const [session, setSessionState] = useState(loadSavedSession);
+  const [themePref, setThemePref] = useState(() => {
+    const saved = window.localStorage.getItem(THEME_KEY);
+    return ["light", "dark", "system"].includes(saved) ? saved : "system";
+  });
+  const [accent, setAccent] = useState(() => {
+    const saved = window.localStorage.getItem(ACCENT_KEY);
+    return ACCENTS[saved] ? saved : "indigo";
+  });
+  const [catBreed, setCatBreedState] = useState(() => {
+    const saved = window.localStorage.getItem(CAT_BREED_KEY);
+    return CAT_BREEDS[saved] ? saved : "ginger";
+  });
+  const [systemDark, setSystemDark] = useState(systemPrefersDark);
+
+  const setCatBreed = useCallback((nextBreed) => {
+    if (CAT_BREEDS[nextBreed]) {
+      setCatBreedState(nextBreed);
+      window.localStorage.setItem(CAT_BREED_KEY, nextBreed);
+    }
+  }, []);
+
+  const setSession = useCallback((next) => {
+    setSessionState(next);
+    if (next) window.localStorage.setItem(SESSION_KEY, JSON.stringify(next));
+    else window.localStorage.removeItem(SESSION_KEY);
+  }, []);
+
+  useEffect(() => {
+    onUnauthorized(() => setSession(null));
+  }, [setSession]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return undefined;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (event) => setSystemDark(event.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  const theme = themePref === "system" ? (systemDark ? "dark" : "light") : themePref;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
+    window.localStorage.setItem(THEME_KEY, themePref);
+    window.localStorage.setItem(ACCENT_KEY, accent);
+    if (accent === "indigo") {
+      ["--primary", "--primary-2", "--primary-soft", "--grad"].forEach((name) => root.style.removeProperty(name));
+    } else {
+      const [first, second] = ACCENTS[accent][theme];
+      root.style.setProperty("--primary", first);
+      root.style.setProperty("--primary-2", second);
+      root.style.setProperty("--primary-soft", `color-mix(in srgb, ${first} ${theme === "dark" ? 22 : 12}%, var(--surface))`);
+      root.style.setProperty("--grad", `linear-gradient(135deg, ${first} 0%, ${second} 100%)`);
+    }
+  }, [theme, themePref, accent]);
+
+  const toggleTheme = () => setThemePref(theme === "dark" ? "light" : "dark");
+
+  const themeCtx = useMemo(
+    () => ({ themePref, setThemePref, accent, setAccent, accents: ACCENTS, catBreed, setCatBreed, catBreeds: CAT_BREEDS }),
+    [themePref, accent, catBreed, setCatBreed]
+  );
+
+  return (
+    <ToastProvider>
+      {session
+        ? <Shell session={session} onSession={setSession} theme={theme} onTheme={toggleTheme} themeCtx={themeCtx} />
+        : <AuthPage onSession={setSession} theme={theme} onTheme={toggleTheme} />}
+    </ToastProvider>
+  );
+}
