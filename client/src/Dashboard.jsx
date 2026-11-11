@@ -4,7 +4,7 @@ import { Alert, Badge, Empty, Icon, Loading, formatDate, hueFor, navigate, subje
 
 export default function Dashboard() {
   const { token, user } = useApp();
-  const { data, loading, error } = useAsync(async (signal) => {
+  const { data, loading, error, reload } = useAsync(async (signal) => {
     const [subjects, attempts, quizzes] = await Promise.all([
       fetchSubjects(token, signal), fetchMyAttempts(token, signal), fetchQuizzes({ limit: 6, token }, signal)
     ]);
@@ -66,7 +66,7 @@ export default function Dashboard() {
             <div className="card-title"><h2>Fresh quizzes</h2><button className="link-button" onClick={() => navigate("/explore")}>See all →</button></div>
             {quizzes.length === 0
               ? <Empty icon="list" title="No quizzes published yet" action={<button className="btn btn-primary" onClick={() => navigate("/create")}>Create the first one</button>}>Be the first to publish a quiz.</Empty>
-              : <div className="grid-auto">{quizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} />)}</div>}
+              : <div className="grid-auto">{quizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} onDeleted={reload} />)}</div>}
           </section>
         </div>
 
