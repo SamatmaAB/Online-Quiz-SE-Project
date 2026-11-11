@@ -87,3 +87,8 @@ Run API helper tests with `npm --prefix server test` and build the client with `
 - `GET /api/subjects/:subjectKey` returns the 4 unit definitions, syllabus topics, and visible unit-specific quizzes.
 - `POST /api/subjects/enroll` and `POST /api/subjects/leave` manage course enrollment for the signed-in student or teacher.
 - `POST /api/subjects/custom` parses raw syllabus text into structured units using Chints and creates a custom course.
+
+### Chints AI Question Generator Studio (Sprint 3)
+
+- `POST /api/ai/generate-questions` generates multiple-choice questions for a given `subjectKey`, `unitIndex`, `topicFocus`, `difficulty`, and `count`.
+- Uses Google Gemini (`gemini-3.8-flash`) when `GEMINI_API_KEY` is configured in `server/.env`, and automatically falls back to the deterministic syllabus-aware Chints engine when offline.
