@@ -1,7 +1,7 @@
 # Software Architecture & Design (SAD) Specification
 
 - **Project Name:** Online Quiz Management System  
-- **Document Version:** 2.0 (Sprint 3 Final Release)  
+- **Document Version:** 3.0 (Current implementation)
 - **Standard:** IEEE Std 1016 – Software Design Descriptions  
 
 ---
@@ -19,7 +19,7 @@ The system is a full-stack web application enabling **Students** and **Teachers 
 ## 2. Architectural Pattern & Component Architecture
 
 ### 2.1 Architectural Pattern
-The system follows a **3-Tier Layered Client–Server Architecture** (Presentation Tier, Stateless REST API + Service Tier, and Document Persistence Tier) with an external **AI Integration Adapter** for **Chints** (Google Gemini 3.8 Flash + built-in syllabus fallback engine).
+The system follows a **3-Tier Layered Client–Server Architecture** (Presentation Tier, REST API + Service Tier, and Document Persistence Tier) with an optional external **AI Integration Adapter** for **Chints** (Gemini 2.5 Flash by default, Gemini 2.0 Flash fallback, and built-in syllabus fallback engine).
 
 ### 2.2 Component Diagram
 
@@ -47,7 +47,7 @@ flowchart TB
 
   subgraph Data["Persistence & External Tier"]
     Mongo[("MongoDB (Users, Quizzes, Attempts, Categories, CustomSubjects, Enrollments, RevokedTokens)")]
-    Gemini["Google Gemini 3.8 Flash API (Chints Live AI)"]
+    Gemini["Google Gemini API (2.5 Flash default; 2.0 Flash fallback)"]
   end
 
   Client <-->|"HTTPS / JSON + Bearer JWT"| MW
@@ -68,7 +68,7 @@ sequenceDiagram
   actor Author as Student / Teacher
   participant UI as Quiz Studio (Builder.jsx)
   participant API as Express API (/api/ai & /api/quizzes)
-  participant Chints as Chints AI (Gemini 3.8 / Syllabus Engine)
+  participant Chints as Chints AI (Gemini 2.5 / Gemini 2.0 / Syllabus Engine)
   participant DB as MongoDB
 
   Author->>UI: Select Subject Unit topics & click "Ask Chints for 5 questions"
@@ -120,28 +120,45 @@ sequenceDiagram
 | `/api/auth/register` | `POST` | Public (Rate-limited) | Registers account (`role: "student"` → `user`, `role: "teacher"` → `admin`) |
 | `/api/auth/login` | `POST` | Public (Rate-limited) | Authenticates user and issues 2-hour signed JWT |
 | `/api/auth/logout` | `POST` | `requireAuth` | Revokes current JWT via SHA-256 hash in `RevokedToken` |
+| `/api/auth/me` | `GET` | `requireAuth` | Returns the current public profile |
+| `/api/auth/profile` | `PATCH` | `requireAuth` | Updates profile fields and issues a replacement JWT |
+| `/api/auth/change-password` | `POST` | `requireAuth` | Changes password and invalidates prior sessions |
+| `/api/auth/password-reset/request` | `POST` | Public (Rate-limited) | Requests a password reset email |
+| `/api/auth/password-reset/complete` | `POST` | Public (Rate-limited) | Consumes a reset token and changes password |
 | `/api/subjects` | `GET` | `requireAuth` | Lists 5 built-in courses + user's custom syllabi with enrollment state |
 | `/api/subjects/custom` | `POST` | `requireAuth` | Parses pasted syllabus with Chints into units/topics & enrolls user |
+| `/api/subjects/preview` | `POST` | `requireAuth` | Parses syllabus text for preview |
 | `/api/subjects/:key/state` | `PATCH` | `requireAuth` | Updates subject state (`enrolled`, `dropped`, `hidden`) |
+| `/api/subjects/hidden/unlock` | `POST` | `requireAuth` | Issues short-lived access for hidden subjects |
+| `/api/subjects/hidden` | `GET` | `requireAuth` + hidden access | Lists the user's hidden subjects |
+| `/api/subjects/hidden/:key/restore` | `PATCH` | `requireAuth` + hidden access | Restores a hidden subject to its prior state |
+| `/api/subjects/custom/:key/reparse` | `POST` | `requireAuth` | Reparses a custom subject's saved syllabus |
+| `/api/subjects/custom/:key` | `DELETE` | `requireAuth` | Deletes a custom subject and linked quizzes |
 | `/api/quizzes` | `GET` | `optionalAuth` | Returns starter + own quizzes for Students; returns **all** published quizzes for Teachers/Admins |
 | `/api/quizzes/by-unit` | `GET` | `requireAuth` | Lists unit quizzes (account-scoped for Students; all accounts for Teachers) |
 | `/api/quizzes/mine` | `GET` | `requireAuth` | Lists user's own quizzes (or `scope=all` for Teachers/Admins) |
 | `/api/quizzes/:quizId` | `GET` | Public Share Link | Loads a published quiz by ID for the `#/quiz/:quizId` shared test page |
+| `/api/quizzes/:quizId/manage` | `GET` | Owner or Admin | Loads quiz details for editing |
 | `/api/quizzes` | `POST` | `requireAuth` | Creates a new quiz (auto-creates category if needed) |
 | `/api/quizzes/:quizId` | `PUT` / `PATCH` / `DELETE` | Owner or Admin | Updates or deletes a quiz |
-| `/api/ai/generate-questions` | `POST` | `requireAuth` | Uses **Chints** (Gemini 3.8 Flash + offline syllabus engine) to draft MCQs |
+| `/api/ai/status` | `GET` | `requireAuth` | Reports Chints status and configured model |
+| `/api/ai/generate-questions` | `POST` | `requireAuth` | Uses **Chints** (Gemini + offline syllabus engine) to draft MCQs |
+| `/api/ai/chat` | `POST` | `requireAuth` | In-app Chints assistant |
 | `/api/attempts` | `POST` | `requireAuth` | Starts a timed attempt (`expiresAt = startedAt + durationMinutes`) |
 | `/api/attempts/:id/answers` | `PATCH` | `requireAuth` | Auto-saves selected options during an active attempt |
 | `/api/attempts/:id/submit` | `POST` | `requireAuth` | Grades attempt and returns question-by-question review |
 | `/api/admin/overview` | `GET` | `requireAdmin` (Teacher) | Platform KPIs (users, teachers, published/draft quizzes, average score) |
-| `/api/admin/users` | `GET` / `PATCH` | `requireAdmin` (Teacher) | Lists users and promotes/demotes between Student and Teacher |
+| `/api/admin/users` | `GET` | `requireAdmin` (Teacher) | Lists users |
+| `/api/admin/users/:userId/role` | `PATCH` | `requireAdmin` (Teacher) | Changes a user's role |
+| `/api/admin/categories` | `GET` / `POST` | `requireAdmin` (Teacher) | Lists and creates categories |
+| `/api/admin/categories/:categoryId` | `PATCH` | `requireAdmin` (Teacher) | Updates a category |
 
 ---
 
 ## 5. Security Architecture & Error Handling Protocol
 
 1. **Authentication & Token Revocation:** Passwords are hashed with `bcryptjs` (cost 12). JWTs expire after 2 hours and carry a `ver` (`tokenVersion`) claim. Logging out writes the token's SHA-256 digest to `RevokedToken` (indexed with MongoDB TTL expiration), and resetting a password increments `tokenVersion` to invalidate all active tokens.
-2. **Account-Scoped Privacy & Teacher Oversight:** Quizzes created or generated by a Student remain private to that Student's catalog/unit listings so other students' dashboards are never cluttered. Teachers (`role: "admin"`) have full oversight across all student and teacher quizzes. Any published quiz can be shared via its direct `#/quiz/:quizId` link.
+2. **Account-Scoped Privacy & Teacher Oversight:** Quizzes created or generated by a Student remain private to that Student's catalog/unit listings. Teachers (`role: "admin"`) have full oversight across all student and teacher quizzes. Any published quiz can be shared via its direct `#/quiz/:quizId` link. Registration accepts the teacher role and the self-service profile route accepts role changes; deployments requiring controlled teacher privileges must restrict those routes or provision roles through a trusted process.
 3. **Standardized Error Handling (`src/middleware/errorHandler.js`):**
    - Malformed JSON → `HTTP 400 { message: "Request body must be valid JSON" }`
    - Mongoose `ValidationError` → `HTTP 400 { message: "Invalid data", details }`
@@ -154,9 +171,9 @@ sequenceDiagram
 
 In accordance with the project evaluation guidelines (*"Deviations from the initially submitted SRS, SAD, and Test Plan are acceptable, provided they are documented and logically explained"*):
 
-1. **Migration from Flask/SQLite Prototype to MERN Stack (Sprint 1–2):** Upgraded from server-rendered templates to a decoupled React 18 SPA + Express/MongoDB REST API with JWT authentication and GitHub Actions CI.
+1. **Migration from Flask/SQLite Prototype to MERN Stack (Sprint 1–2):** Upgraded from server-rendered templates to a decoupled React 18 SPA + Express/MongoDB REST API with JWT authentication.
 2. **Addition of Subject & Unit Curriculum Hierarchy + Custom Syllabus Parser (Sprint 3):** Carried forward the 5 core university subjects (`SE`, `UIUX`, `KOTLIN`, `DBMS`, `ML`) and custom syllabus parser from the prototype into MongoDB (`CustomSubject`, `SubjectEnrollment`).
-3. **Chints AI Question Generator with Dual-Mode Resilience (Sprint 3):** Integrated Google `gemini-3.8-flash` for live AI question generation and syllabus parsing, paired with a built-in syllabus fallback engine so demos succeed even on machines without an external API key.
+3. **Chints AI Question Generator with Dual-Mode Resilience:** Integrated Gemini (`gemini-2.5-flash` by default, `gemini-2.0-flash` fallback) for live question generation and syllabus parsing, paired with a built-in fallback when no API key is configured or the provider is unavailable.
 4. **Student vs. Teacher Role Selector & Shareable Test Links (Sprint 3):** Added explicit **Student** and **Teacher (Admin)** account selection at sign-up, account-private generated quizzes for students, full Teacher oversight, and one-click `#/quiz/:quizId` share links.
 
 
@@ -170,7 +187,7 @@ In accordance with the project evaluation guidelines (*"Deviations from the init
 | **Presentation** | `client/src/Builder.jsx` | Chints AI Studio prompt controls, question review, and quiz publishing |
 | **Presentation** | `client/src/Manage.jsx` | Personal quiz workspace (`MyQuizzes`), attempt review (`History`), and `TeacherConsole` |
 | **API Routing** | `server/src/routes/subjects.js` | Built-in/custom subject catalog, enrollment, and syllabus parsing endpoints |
-| **API Routing** | `server/src/routes/ai.js` | Live Gemini 3.8 Flash MCQ generation and deterministic syllabus fallback |
+| **API Routing** | `server/src/routes/ai.js` | Gemini MCQ generation and deterministic syllabus fallback |
 | **Domain Service** | `server/src/services/catalog.js` | Pagination, regex-safe search normalization, and public quiz serialization |
 
 ## 10. Security & Role-Based Access Control (RBAC) Matrix
@@ -185,6 +202,6 @@ In accordance with the project evaluation guidelines (*"Deviations from the init
 
 ## 11. Error Handling & Resilience Design
 
-1. **AI Provider Resilience**: `generateQuestionsWithChints()` enforces a 45-second `AbortSignal.timeout` on upstream Gemini calls and seamlessly falls back to `chintsFallbackQuestions()` on network errors or missing keys.
+1. **AI Provider Resilience**: Gemini calls use a 30-second `AbortSignal.timeout` and the server falls back to `chintsFallbackQuestions()` when no key is configured or provider requests fail.
 2. **Idempotent Startup Seeding**: `ensureSeedData()` checks existing category/quiz counts before inserting starter records so restarts never duplicate seed data.
 3. **Expired Attempt Finalization**: `finalizeExpiredAttempts()` uses atomic MongoDB `bulkWrite` updates to prevent race conditions when grading timed-out attempts.

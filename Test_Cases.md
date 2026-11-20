@@ -5,6 +5,8 @@
 - **Document Type:** Software Testing & Traceability Documentation  
 - **Standard:** IEEE 829 Software Test Documentation  
 
+> **Report status:** The execution records below are dated 11 November 2026 and describe that recorded run. They have not been rerun against the latest repository state. The SRS file formerly referenced by this document is not present in the current repository; FR identifiers are retained as submission traceability labels.
+
 ---
 
 ## 1. Introduction
@@ -67,7 +69,7 @@ All 22 test cases were executed against the integrated MERN + Chints AI system o
 | **TC-17** | `POST /api/auth/logout` stored SHA-256 token hash in `RevokedToken` and invalidated session. | **Passed** |
 | **TC-18** | Enrolling in `SE` unlocked all 4 syllabus units and listed unit quizzes (`HTTP 200`). | **Passed** |
 | **TC-19** | Custom syllabus with `Unit 1` and `Unit 2` parsed into structured units & topics (`HTTP 201`). | **Passed** |
-| **TC-20** | Chints AI (`gemini-3.8-flash` + syllabus engine fallback) drafted 5 valid 4-option MCQs (`HTTP 200`). | **Passed** |
+| **TC-20** | Chints generated 5 valid 4-option MCQs (`HTTP 200`) using the provider/fallback configuration recorded for that run. | **Passed** |
 | **TC-21** | Student-generated quiz remained private to creator + Teachers in listings, and opened via `#/quiz/:quizId` Share Link. | **Passed** |
 | **TC-22** | Teacher Console displayed all accounts' quizzes, student attempt scores, categories, and role controls (`HTTP 200`). | **Passed** |
 

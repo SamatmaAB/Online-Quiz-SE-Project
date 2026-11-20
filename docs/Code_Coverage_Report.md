@@ -4,6 +4,8 @@
 - **Coverage Tool:** Node.js V8 Native Coverage (`node --test --experimental-test-coverage`)
 - **Date:** 11 November 2026
 
+> **Report status:** The measurements below are a recorded snapshot from 11 November 2026, before subsequent repository changes. They have not been regenerated against the latest code. Use the command in section 3 for current coverage; coverage values depend on the exact Node.js version and test suite.
+
 ---
 
 ## 1. Summary Metrics
@@ -53,4 +55,4 @@ node --test --experimental-test-coverage
 
 ## Expanded 8-Suite Coverage Summary
 
-With the addition of `catalog.test.js`, `subjectAccess.test.js`, `auth.test.js`, and `seedData.test.js`, the automated unit test runner now executes **8 test files (35 unit tests)** covering pagination, search sanitization, custom subject key validation, bearer token extraction, grade letter calculation, difficulty normalization, and Chints AI question generation.
+The recorded expanded run reported **35 unit tests** and included `catalog.test.js`, `subjectAccess.test.js`, `auth.test.js`, and `seedData.test.js`, covering pagination, search sanitization, custom subject key validation, bearer token extraction, grade letter calculation, difficulty normalization, and Chints AI question generation. See the report status above before treating these figures as current.

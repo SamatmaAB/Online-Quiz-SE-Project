@@ -1,9 +1,11 @@
 # System Validation Report – Online Quiz Management System
 
 - **Project:** Online Quiz Management System
-- **Environment:** Node.js v26.13.0, Express 4.21, MongoDB 9.0, React 18.3 + Vite 6.4, Gemini 3.8 Flash (`Chints` AI)
+- **Recorded Environment:** Node.js v26.13.0, Express 4.21, MongoDB 9.0, React 18.3 + Vite 6.4
 - **Validation Date:** 11 November 2026
 - **Overall Status:** **PASSED (25 / 25 End-to-End Checks + Security Validation)**
+
+> **Report status:** The checks below document the run recorded on 11 November 2026. This historical result has not been repeated after the latest repository update; re-run `node server/scripts/smoke.js` against a configured API and database to verify the current build.
 
 ---
 
@@ -69,4 +71,4 @@ The automated end-to-end validation suite executes 25 live HTTP requests against
 
 ## Regression Verification Summary
 
-All **35 unit tests** (`npm --prefix server test`) and **25 end-to-end API smoke assertions** (`node server/scripts/smoke.js`) pass with zero regressions following the Sprint 3/4 service and documentation additions.
+The recorded verification summary reports **35 unit tests** (`npm --prefix server test`) and **25 end-to-end API smoke assertions** (`node server/scripts/smoke.js`) passing at that time. This historical outcome is not a current regression guarantee.

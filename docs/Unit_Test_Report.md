@@ -7,11 +7,13 @@
 - **Passed:** 23 (100%)
 - **Failed:** 0
 
+> **Report status:** The table and raw output below are the recorded 11 November 2026 run. The later Sprint 4 summary records 35 tests across the expanded suite. These are historical execution results; this report has not been rerun after the latest repository update. Run `npm --prefix server test` to produce a current result.
+
 ---
 
 ## 1. Executive Summary
 
-Automated unit tests verify the core business logic, input validators, security token hashing, scoring mathematics, syllabus parser, and Chints AI output normalizer in isolation from external network services. All **23 unit tests** passed in **1.68 seconds**.
+Automated unit tests verify core business logic, input validators, security token hashing, scoring mathematics, syllabus parsing, and Chints AI output normalization in isolation from external network services. The original recorded run passed **23 tests** in **1.68 seconds**.
 
 ---
 

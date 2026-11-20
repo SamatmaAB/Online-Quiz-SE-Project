@@ -1,6 +1,6 @@
 # Online Quiz System client
 
-React + Vite interface for browsing published quizzes and filtering by category or title.
+React + Vite interface for account management, subject and syllabus exploration, quiz creation, catalog search, timed quiz attempts, result review, and the teacher console. Chints provides quiz authoring help and an in-app assistant.
 
 ## Development
 
@@ -10,4 +10,6 @@ React + Vite interface for browsing published quizzes and filtering by category 
 
 Vite proxies `/api` requests to the API at http://localhost:5000. Set `CLIENT_ORIGIN` in the server environment if the client uses a different origin.
 
-The catalog UI includes search, category chips, paginated results, loading/error/empty states, difficulty and quiz metadata. The Start quiz control is intentionally disabled until quiz attempts and submission are implemented in a later sprint.
+The catalog UI includes search, category and difficulty filters, sorting, paginated results, and loading/error/empty states. Signed-in users can create and manage quizzes, take timed attempts, and review results. Teachers can access platform management tools.
+
+For API routes, environment variables, and deployment setup, see the repository [README](../README.md) and [deployment guide](../DEPLOYMENT.md).

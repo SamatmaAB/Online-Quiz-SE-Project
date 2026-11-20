@@ -5,6 +5,8 @@
 - **Overall Unit Branch Coverage:** **87.27%**
 - **Date:** 11 November 2026
 
+> **Report status:** These are recorded results from 11 November 2026 and have not been recomputed against the latest repository state. Re-run the coverage command in the Code Coverage Report before using these figures as current.
+
 ---
 
 ## 1. Overview

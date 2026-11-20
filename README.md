@@ -13,19 +13,18 @@ MERN-based online quiz system with secure account access, a searchable quiz cata
 ## Run locally
 
 1. Install Node.js 20+ and start MongoDB locally or prepare a MongoDB Atlas database.
-2. Copy `.env.example` to `server/.env`.
-3. Set `MONGODB_URI` and replace `JWT_SECRET` with a random value of at least 32 characters.
-4. Start the API in one terminal:
+2. Create `server/.env` with `MONGODB_URI` and a random `JWT_SECRET` of at least 32 characters. Add `CLIENT_ORIGIN` when the browser origin differs from the local Vite setup. Add SMTP settings only if password reset email is needed; add `GEMINI_API_KEY` to enable live Gemini question generation.
+3. Start the API in one terminal:
    ```bash
    npm --prefix server install
    npm run server:dev
    ```
-5. Start the client in another terminal:
+4. Start the client in another terminal:
    ```bash
    npm --prefix client install
    npm --prefix client run dev
    ```
-6. Open http://localhost:5173. API health is available at http://localhost:5000/api/health.
+5. Open http://localhost:5173. API health is available at http://localhost:5000/api/health.
 
 ## API
 
@@ -83,19 +82,19 @@ Run API helper tests with `npm --prefix server test` and build the client with `
 
 ### Subjects & Custom Syllabus Management (Sprint 3)
 
-- `GET /api/subjects` returns all 5 built-in courses (`SE`, `UIUX`, `KOTLIN`, `DBMS`, `ML`), user-uploaded custom subjects, and the current user's enrolled subject keys.
-- `GET /api/subjects/:subjectKey` returns the 4 unit definitions, syllabus topics, and visible unit-specific quizzes.
-- `POST /api/subjects/enroll` and `POST /api/subjects/leave` manage course enrollment for the signed-in student or teacher.
-- `POST /api/subjects/custom` parses raw syllabus text into structured units using Chints and creates a custom course.
+- `GET /api/subjects` returns built-in subjects, the signed-in user's custom subjects, and each subject's state.
+- `GET /api/subjects/:subjectKey` returns an enrolled subject's syllabus and unit-specific quizzes.
+- `PATCH /api/subjects/:subjectKey/state` sets a subject state (`enrolled`, `dropped`, or `hidden`).
+- `POST /api/subjects/preview` parses syllabus text for preview; `POST /api/subjects/custom` creates a custom subject. Custom subjects can be reparsed or deleted through `/api/subjects/custom/:subjectKey`.
 
 ### Chints AI Question Generator Studio (Sprint 3)
 
-- `POST /api/ai/generate-questions` generates multiple-choice questions for a given `subjectKey`, `unitIndex`, `topicFocus`, `difficulty`, and `count`.
-- Uses Google Gemini (`gemini-3.8-flash`) when `GEMINI_API_KEY` is configured in `server/.env`, and automatically falls back to the deterministic syllabus-aware Chints engine when offline.
+- `POST /api/ai/generate-questions` generates multiple-choice questions from `topics`, optional `context`, `difficulty`, and `count`.
+- Uses Gemini when `GEMINI_API_KEY` is configured. The current default model is `gemini-2.5-flash`, with `gemini-2.0-flash` as a fallback; without a key or when the provider is unavailable, question generation uses the built-in Chints fallback.
 
 ### Student vs. Teacher (Admin) Roles & Account-Scoped Privacy
 
-- During registration (`POST /api/auth/register`), users can select **Student** (`role: "user"`) or **Teacher** (`role: "admin"`).
+- During registration (`POST /api/auth/register`), users can select **Student** (`role: "user"`) or **Teacher** (`role: "admin"`). The profile endpoint also supports role updates; deployments that need restricted teacher provisioning should enforce that policy outside public registration.
 - Student-generated quizzes remain private to the creator's own account in catalog and unit listings.
 - Teachers (`role: "admin"`) have full global visibility across all student-created and teacher-created quizzes.
 
@@ -108,4 +107,4 @@ Run API helper tests with `npm --prefix server test` and build the client with `
 ### Testing, Coverage & E2E Smoke Suite
 
 - **Unit Tests & Coverage**: `npm --prefix server test` (or `node --test --experimental-test-coverage` inside `server/`).
-- **End-to-End Smoke Suite**: `node server/scripts/smoke.js` (executes 25 live API assertions across Auth, Subjects, Chints AI, Privacy, Share Links, and Timed Attempts).
+- **End-to-End Smoke Suite**: `node server/scripts/smoke.js` (runs live API checks; requires a reachable API and MongoDB).
